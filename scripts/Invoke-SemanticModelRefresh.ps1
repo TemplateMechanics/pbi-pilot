@@ -84,6 +84,17 @@ Write-Host "  TMDL:   $TmdlPath" -ForegroundColor White
 # Try to load TOM assemblies
 $tomLoaded = $false
 
+# Determine which TOM package works for this PowerShell version
+$isPSCore = $PSVersionTable.PSEdition -eq 'Core'
+if ($isPSCore) {
+    $preferredPackage = "microsoft.analysisservices.netcore.retail.amd64"
+    $fallbackPackage  = "microsoft.analysisservices.retail.amd64"
+} else {
+    # PS 5.1 (.NET Framework) - must use the net45 package
+    $preferredPackage = "microsoft.analysisservices.retail.amd64"
+    $fallbackPackage  = "microsoft.analysisservices.netcore.retail.amd64"
+}
+
 # Option 1: Check if already loaded
 try {
     [Microsoft.AnalysisServices.Tabular.TmdlSerializer] | Out-Null
@@ -94,8 +105,8 @@ try {
 # Option 2: Look for NuGet package in local cache
 if (-not $tomLoaded) {
     $nugetPaths = @(
-        "$env:USERPROFILE\.nuget\packages\microsoft.analysisservices.netcore.retail.amd64",
-        "$env:USERPROFILE\.nuget\packages\microsoft.analysisservices.retail.amd64"
+        "$env:USERPROFILE\.nuget\packages\$preferredPackage",
+        "$env:USERPROFILE\.nuget\packages\$fallbackPackage"
     )
     foreach ($nugetBase in $nugetPaths) {
         if (Test-Path $nugetBase) {
@@ -103,10 +114,14 @@ if (-not $tomLoaded) {
             if ($latestVersion) {
                 $dllPath = Get-ChildItem $latestVersion.FullName -Filter "Microsoft.AnalysisServices.Tabular.dll" -Recurse | Select-Object -First 1
                 if ($dllPath) {
-                    Add-Type -Path $dllPath.FullName
-                    $tomLoaded = $true
-                    Write-Host "  Loaded TOM from: $($dllPath.FullName)" -ForegroundColor DarkGray
-                    break
+                    try {
+                        Add-Type -Path $dllPath.FullName -ErrorAction Stop
+                        $tomLoaded = $true
+                        Write-Host "  Loaded TOM from: $($dllPath.FullName)" -ForegroundColor DarkGray
+                        break
+                    } catch {
+                        Write-Verbose "Could not load $($dllPath.FullName): $_"
+                    }
                 }
             }
         }
@@ -117,38 +132,109 @@ if (-not $tomLoaded) {
 if (-not $tomLoaded) {
     $pbiPaths = @(
         "${env:ProgramFiles}\Microsoft Power BI Desktop\bin",
-        "${env:ProgramFiles(x86)}\Microsoft Power BI Desktop\bin",
-        "$env:LOCALAPPDATA\Microsoft\WindowsApps"  
+        "${env:ProgramFiles(x86)}\Microsoft Power BI Desktop\bin"
     )
+    # Store version: find via running process path
+    $pbiProc = Get-Process -Name "PBIDesktop" -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($pbiProc -and $pbiProc.Path) {
+        $pbiPaths = @(Split-Path $pbiProc.Path -Parent) + $pbiPaths
+    }
     foreach ($pbiPath in $pbiPaths) {
         $dll = Join-Path $pbiPath "Microsoft.AnalysisServices.Tabular.dll"
         if (Test-Path $dll) {
-            Add-Type -Path $dll
-            $tomLoaded = $true
-            Write-Host "  Loaded TOM from PBI Desktop: $dll" -ForegroundColor DarkGray
-            break
+            try {
+                Add-Type -Path $dll -ErrorAction Stop
+                $tomLoaded = $true
+                Write-Host "  Loaded TOM from PBI Desktop: $dll" -ForegroundColor DarkGray
+                break
+            } catch {
+                Write-Verbose "Could not load $dll : $_"
+            }
         }
     }
 }
 
+# Option 4: Auto-install from NuGet
 if (-not $tomLoaded) {
-    Write-Host "`n  TOM assemblies not found. Installing via NuGet..." -ForegroundColor Yellow
-    
-    # Try Install-Package
-    try {
-        Install-Package Microsoft.AnalysisServices.NetCore.retail.amd64 -Source nuget.org -Scope CurrentUser -Force -ErrorAction Stop | Out-Null
-        $pkg = Get-Package Microsoft.AnalysisServices.NetCore.retail.amd64 -ErrorAction Stop
-        $dllPath = Get-ChildItem (Split-Path $pkg.Source -Parent) -Filter "Microsoft.AnalysisServices.Tabular.dll" -Recurse | Select-Object -First 1
-        if ($dllPath) {
-            Add-Type -Path $dllPath.FullName
-            $tomLoaded = $true
+    Write-Host "`n  TOM assemblies not found. Installing $preferredPackage..." -ForegroundColor Yellow
+
+    $installed = $false
+    $nugetSource = "https://api.nuget.org/v3/index.json"
+
+    # Strategy A: dotnet CLI
+    $dotnet = Get-Command dotnet -ErrorAction SilentlyContinue
+    if ($dotnet) {
+        Write-Host "  Using dotnet CLI..." -ForegroundColor DarkGray
+        $tmpDir = Join-Path $env:TEMP "tom-install-$(Get-Random)"
+        try {
+            New-Item -Path $tmpDir -ItemType Directory -Force | Out-Null
+            Push-Location $tmpDir
+            & dotnet new classlib --no-restore 2>$null | Out-Null
+            $addOutput = & dotnet add package $preferredPackage --source $nugetSource 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $installed = $true
+                Write-Host "  Package installed via dotnet CLI" -ForegroundColor Green
+            } else {
+                Write-Verbose "dotnet add failed: $addOutput"
+            }
+            Pop-Location
+        } catch {
+            Write-Verbose "dotnet install failed: $_"
+            if ((Get-Location).Path -eq $tmpDir) { Pop-Location }
+        } finally {
+            Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue
         }
-    } catch {
-        Write-Warning "Auto-install failed. Please install manually:"
-        Write-Warning "  Install-Package Microsoft.AnalysisServices.NetCore.retail.amd64 -Source nuget.org"
-        Write-Warning "  - OR -"
-        Write-Warning "  dotnet add package Microsoft.AnalysisServices.NetCore.retail.amd64"
-        throw "TOM client libraries not available. See above for installation instructions."
+    }
+
+    # Strategy B: Direct NuGet download (no dotnet SDK required)
+    if (-not $installed) {
+        Write-Host "  Downloading package directly from NuGet..." -ForegroundColor DarkGray
+        $nugetApiUrl = "https://api.nuget.org/v3-flatcontainer/$preferredPackage/index.json"
+        try {
+            $versions = (Invoke-RestMethod -Uri $nugetApiUrl -ErrorAction Stop).versions
+            $pkgVersion = $versions[-1]
+            $nupkgUrl = "https://api.nuget.org/v3-flatcontainer/$preferredPackage/$pkgVersion/$preferredPackage.$pkgVersion.nupkg"
+            $destDir = Join-Path "$env:USERPROFILE\.nuget\packages" "$preferredPackage\$pkgVersion"
+            $nupkgPath = Join-Path $env:TEMP "$preferredPackage.$pkgVersion.nupkg"
+
+            Write-Host "  Downloading $preferredPackage v$pkgVersion..." -ForegroundColor DarkGray
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            Invoke-WebRequest -Uri $nupkgUrl -OutFile $nupkgPath -UseBasicParsing -ErrorAction Stop
+
+            New-Item -Path $destDir -ItemType Directory -Force | Out-Null
+            Expand-Archive -Path $nupkgPath -DestinationPath $destDir -Force
+            Remove-Item $nupkgPath -ErrorAction SilentlyContinue
+            $installed = $true
+            Write-Host "  Package downloaded and extracted" -ForegroundColor Green
+        } catch {
+            Write-Warning "Direct download failed: $_"
+        }
+    }
+
+    # Try loading from cache after install
+    if ($installed) {
+        foreach ($nugetBase in $nugetPaths) {
+            if (Test-Path $nugetBase) {
+                $latestVersion = Get-ChildItem $nugetBase -Directory | Sort-Object Name -Descending | Select-Object -First 1
+                if ($latestVersion) {
+                    $dllPath = Get-ChildItem $latestVersion.FullName -Filter "Microsoft.AnalysisServices.Tabular.dll" -Recurse | Select-Object -First 1
+                    if ($dllPath) {
+                        try {
+                            Add-Type -Path $dllPath.FullName -ErrorAction Stop
+                            $tomLoaded = $true
+                            Write-Host "  Loaded TOM from: $($dllPath.FullName)" -ForegroundColor DarkGray
+                            break
+                        } catch {
+                            Write-Verbose "Could not load $($dllPath.FullName): $_"
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (-not $tomLoaded) {
+        throw "TOM client libraries could not be loaded. Try installing manually:`n  dotnet add package $preferredPackage --source $nugetSource"
     }
 }
 
@@ -164,7 +250,7 @@ try {
     Write-Host "  Connected to database: $dbName" -ForegroundColor Green
 
     Write-Host "  Deserializing TMDL from disk..." -ForegroundColor Cyan
-    $newDb = [Microsoft.AnalysisServices.TmdlSerializer]::DeserializeDatabaseFromFolder($TmdlPath)
+    $newDb = [Microsoft.AnalysisServices.Tabular.TmdlSerializer]::DeserializeDatabaseFromFolder($TmdlPath)
 
     Write-Host "  Applying changes to running model..." -ForegroundColor Cyan
     

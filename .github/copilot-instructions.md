@@ -19,6 +19,8 @@ This workspace contains Power BI Project (PBIP) files. You are working with:
 8. **When adding pages**, also update `pages.json` pageOrder array
 9. **When adding measures**, add `lineageTag` and `formatString` properties
 10. **Prefer existing patterns** — look at existing .tmdl and .json files in the project for style consistency
+11. **Visual schema URL** must use `visualContainer/` (NOT `visual/`) — see SKILL.md for all correct schema paths
+12. **Numeric columns in value roles** (card Values, chart Y-axis) must use Aggregation wrapper — see SKILL.md for details
 
 ## File Locations
 
@@ -37,3 +39,4 @@ PowerShell scripts are in `scripts/`:
 - `Invoke-SemanticModelRefresh.ps1` — pushes semantic model changes to running PBI Desktop via TOM
 - `Restart-PBIDesktop.ps1` — automates close and reopen of the PBIP file
 - `Validate-PBIP.ps1` — checks TMDL and PBIR files for common errors
+- `Get-PBIRSchemaVersions.ps1` — reports schema versions used in PBIR files

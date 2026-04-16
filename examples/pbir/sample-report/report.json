@@ -1,5 +1,5 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/1.0.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/3.2.0/schema.json",
   "themeCollection": {
     "baseTheme": {
       "name": "CY24SU06",
@@ -16,7 +16,5 @@
     "#744EC2",
     "#D9B300",
     "#36B37E"
-  ],
-  "filters": [],
-  "annotations": []
+  ]
 }

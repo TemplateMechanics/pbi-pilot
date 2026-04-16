@@ -1,0 +1,24 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "product_analysis",
+  "displayName": "Product Analysis",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280,
+  "background": {
+    "color": {
+      "solid": {
+        "color": "#FFFFFF"
+      }
+    },
+    "transparency": 0
+  },
+  "wallpaper": {
+    "color": {
+      "solid": {
+        "color": "#FFFFFF"
+      }
+    },
+    "transparency": 0
+  }
+}

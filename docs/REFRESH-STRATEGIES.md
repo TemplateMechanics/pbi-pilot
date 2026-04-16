@@ -26,7 +26,9 @@ $port = .\scripts\Find-PBIDesktopPort.ps1
 
 **How it works:**
 1. PBI Desktop runs `msmdsrv.exe` (Analysis Services) on a random local port
-2. The port is written to `%LOCALAPPDATA%\Microsoft\Power BI Desktop\AnalysisServicesWorkspaces\...\msmdsrv.port.txt`
+2. The port is written to a port file in the AnalysisServicesWorkspaces folder:
+   - **MSI install:** `%LOCALAPPDATA%\Microsoft\Power BI Desktop\AnalysisServicesWorkspaces\...\msmdsrv.port.txt`
+   - **Store install:** `%USERPROFILE%\Microsoft\Power BI Desktop Store App\AnalysisServicesWorkspaces\...\msmdsrv.port.txt`
 3. We connect via `localhost:<port>` using the TOM (Tabular Object Model) .NET library
 4. TMDL files are deserialized into a TOM Database object and applied to the running model
 5. PBI Desktop synchronizes the changes to the report canvas

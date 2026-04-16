@@ -82,9 +82,17 @@ foreach ($file in $tmdlFiles) {
 
     $lines = Get-Content $file.FullName -ErrorAction SilentlyContinue
     $lineNum = 0
+    $inMExpression = $false
 
     foreach ($line in $lines) {
         $lineNum++
+
+        # Track M expression blocks (partition source = ... through blank line or next keyword)
+        if ($line -match '^\t+source\s*=$') { $inMExpression = $true; continue }
+        if ($inMExpression -and ($line -match '^\s*$' -or $line -match '^\t(measure|column|partition|hierarchy|annotation)\s')) {
+            $inMExpression = $false
+        }
+        if ($inMExpression) { continue }
         
         # Check for space indentation (should be tabs)
         if ($line -match '^ +\S' -and $line -notmatch '^\t') {
@@ -139,6 +147,13 @@ foreach ($rpt in $rptFolders) {
     }
 }
 
+# Fallback: scan for any report-like JSON structures (pages.json, page.json, visual.json, report.json, version.json)
+if ($jsonFiles.Count -eq 0) {
+    $reportJsonNames = @("pages.json", "page.json", "visual.json", "report.json", "version.json", "bookmarks.json", "reportExtensions.json")
+    $jsonFiles = Get-ChildItem -Path $Path -Filter "*.json" -Recurse |
+        Where-Object { $reportJsonNames -contains $_.Name }
+}
+
 if ($jsonFiles.Count -gt 0) {
     Write-Host "  Checking $($jsonFiles.Count) PBIR JSON files..." -ForegroundColor Yellow
 }
@@ -156,6 +171,20 @@ foreach ($file in $jsonFiles) {
     # Check for $schema property
     if (-not $json.'$schema') {
         Add-Warning $file.Name "Missing `$schema property (recommended for validation)"
+    } else {
+        # Validate schema URL uses correct path for each file type
+        $schemaUrl = $json.'$schema'
+        $schemaPathMap = @{
+            "report.json"           = "report/"
+            "version.json"          = "versionMetadata/"
+            "page.json"             = "page/"
+            "visual.json"           = "visualContainer/"
+            "pages.json"            = "pagesMetadata/"
+        }
+        $expectedPath = $schemaPathMap[$file.Name]
+        if ($expectedPath -and $schemaUrl -notmatch [regex]::Escape($expectedPath)) {
+            Add-Error $file.Name "Wrong schema path in `$schema URL. Expected path to contain '$expectedPath' but got: $schemaUrl"
+        }
     }
 
     # Page-specific checks
@@ -182,6 +211,12 @@ foreach ($file in $jsonFiles) {
         foreach ($pf in $pageFolders) {
             if ($json.pageOrder -notcontains $pf) {
                 Add-Warning "pages.json" "Page folder '$pf' exists but is not in pageOrder array"
+            }
+        }
+
+        foreach ($po in $json.pageOrder) {
+            if ($pageFolders -notcontains $po) {
+                Add-Warning "pages.json" "pageOrder entry '$po' has no matching page folder"
             }
         }
     }

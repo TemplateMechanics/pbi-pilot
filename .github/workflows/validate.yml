@@ -1,0 +1,39 @@
+name: Validate PBIP
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run PBIP Validation
+        shell: pwsh
+        run: |
+          .\scripts\Validate-PBIP.ps1 -Path ".\examples\power-bi-example-data"
+          .\scripts\Validate-PBIP.ps1 -Path ".\examples"
+
+      - name: Run Pester Tests
+        shell: pwsh
+        run: |
+          Install-Module -Name Pester -Force -SkipPublisherCheck -Scope CurrentUser -MinimumVersion 5.0.0
+          Import-Module Pester -MinimumVersion 5.0.0 -Force
+          $config = New-PesterConfiguration
+          $config.Run.Path = ".\tests\"
+          $config.Output.Verbosity = "Detailed"
+          $config.TestResult.Enabled = $true
+          $config.TestResult.OutputFormat = "NUnitXml"
+          $config.TestResult.OutputPath = ".\test-results.xml"
+          Invoke-Pester -Configuration $config
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.xml

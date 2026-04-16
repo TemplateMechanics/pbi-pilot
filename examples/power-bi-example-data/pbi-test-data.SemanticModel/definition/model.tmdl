@@ -1,0 +1,20 @@
+model Model
+	culture: en-GB
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["financials"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table financials
+ref table DateTableTemplate_6db91d3f-464f-4c65-81d7-118b36361f8f
+ref table LocalDateTable_e9898aea-e4ad-4cc5-b621-0e34da57951c
+
+ref cultureInfo en-GB
+
