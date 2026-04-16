@@ -2,8 +2,8 @@
 /// Users should update SampleDataPath to match their local PBI Desktop install.
 expression SampleDataPath =
 	let
-		/// Default path for Microsoft Store install of Power BI Desktop.
-		/// MSI install path: "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData"
+		// Default path for Microsoft Store install of Power BI Desktop.
+		// MSI install path: "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData"
 		Source = "C:\Program Files\WindowsApps\Microsoft.MicrosoftPowerBIDesktop_2.152.1279.0_x64__8wekyb3d8bbwe\bin\SampleData"
 	in
 		Source
