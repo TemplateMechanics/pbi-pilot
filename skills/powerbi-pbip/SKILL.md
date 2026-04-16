@@ -276,15 +276,14 @@ Use parameters to avoid hardcoded paths. This lets each user update one value in
 ```tmdl
 /// Parameterized file path — user updates this to match their PBI Desktop install
 expression SampleDataPath =
-	let
-		/// Store install (default):
-		Source = "C:\Program Files\WindowsApps\Microsoft.MicrosoftPowerBIDesktop_...\bin\SampleData"
-		/// MSI install alternative:
-		/// Source = "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData"
-	in
-		Source
+		let
+			// Store install (default):
+			Source = "C:\Program Files\WindowsApps\Microsoft.MicrosoftPowerBIDesktop_...\bin\SampleData"
+			// MSI install alternative:
+			// Source = "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData"
+		in
+			Source
 	lineageTag: c4e8f2a6-3b5d-7e9f-1a2c-4d6e8f0a2b4c
-	queryGroup: Parameters
 
 	annotation PBI_NavigationStepName = Navigation
 

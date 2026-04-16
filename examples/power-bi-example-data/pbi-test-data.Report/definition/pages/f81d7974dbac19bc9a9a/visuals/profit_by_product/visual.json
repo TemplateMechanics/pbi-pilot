@@ -5,8 +5,8 @@
     "x": 640,
     "y": 180,
     "z": 2001,
-    "width": 580,
     "height": 360,
+    "width": 580,
     "tabOrder": 4
   },
   "visual": {
@@ -56,7 +56,6 @@
         }
       }
     },
-    "objects": {},
     "visualContainerObjects": {
       "title": [
         {

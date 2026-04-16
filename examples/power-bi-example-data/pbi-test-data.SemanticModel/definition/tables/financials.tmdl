@@ -1,6 +1,10 @@
 table financials
 	lineageTag: 340a90d3-409b-427b-becb-19afc9b58dcd
 
+	measure 'Profit Margin' = DIVIDE(SUM(financials[Profit]), SUM(financials[Sales]), 0)
+		formatString: 0.00%
+		lineageTag: a7c3e1b0-5d42-4f8e-9a1c-3b7d920ef456
+
 	column Segment
 		dataType: string
 		lineageTag: 8bbd3b59-0604-4eb2-891c-ba3cf05ee22b
@@ -165,6 +169,3 @@ table financials
 
 	annotation PBI_ResultType = Table
 
-	measure 'Profit Margin' = DIVIDE(SUM(financials[Profit]), SUM(financials[Sales]), 0)
-		lineageTag: a7c3e1b0-5d42-4f8e-9a1c-3b7d920ef456
-		formatString: 0.00%

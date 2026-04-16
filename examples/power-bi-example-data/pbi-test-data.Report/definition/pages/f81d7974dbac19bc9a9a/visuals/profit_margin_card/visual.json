@@ -5,8 +5,8 @@
     "x": 40,
     "y": 20,
     "z": 1000,
-    "width": 280,
     "height": 140,
+    "width": 280,
     "tabOrder": 0
   },
   "visual": {
@@ -33,7 +33,6 @@
         }
       }
     },
-    "objects": {},
     "visualContainerObjects": {
       "title": [
         {
