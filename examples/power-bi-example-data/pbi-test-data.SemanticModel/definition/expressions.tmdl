@@ -1,6 +1,5 @@
 /// Shared expressions and parameters for the semantic model.
 /// Users should update SampleDataPath to match their local PBI Desktop install.
-
 expression SampleDataPath =
 	let
 		/// Default path for Microsoft Store install of Power BI Desktop.
