@@ -1,0 +1,105 @@
+/// Sales transaction fact table
+table Sales
+	lineageTag: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+
+	/// Total revenue across all transactions
+	measure 'Total Sales' = SUM(Sales[Amount])
+		formatString: $ #,##0.00
+		lineageTag: 10000001-0001-0001-0001-000000000001
+
+	/// Number of transactions
+	measure '# Orders' = COUNTROWS(Sales)
+		formatString: #,##0
+		lineageTag: 10000001-0001-0001-0001-000000000002
+
+	/// Average transaction value
+	measure 'Avg Order Value' = DIVIDE([Total Sales], [# Orders])
+		formatString: $ #,##0.00
+		lineageTag: 10000001-0001-0001-0001-000000000003
+
+	/// Year-to-date sales
+	measure 'Sales YTD' = TOTALYTD([Total Sales], 'Date'[Date])
+		formatString: $ #,##0.00
+		lineageTag: 10000001-0001-0001-0001-000000000004
+
+	/// Prior year sales for comparison
+	measure 'Sales PY' = CALCULATE([Total Sales], SAMEPERIODLASTYEAR('Date'[Date]))
+		formatString: $ #,##0.00
+		lineageTag: 10000001-0001-0001-0001-000000000005
+
+	/// Year-over-year growth percentage
+	measure 'Sales YoY %' =
+			VAR CurrentYear = [Total Sales]
+			VAR PriorYear = [Sales PY]
+			RETURN DIVIDE(CurrentYear - PriorYear, PriorYear)
+		formatString: 0.0 %
+		lineageTag: 10000001-0001-0001-0001-000000000006
+
+	/// Percentage of total across all filters
+	measure '% of Total Sales' =
+			DIVIDE(
+				[Total Sales],
+				CALCULATE([Total Sales], REMOVEFILTERS())
+			)
+		formatString: 0.0 %
+		lineageTag: 10000001-0001-0001-0001-000000000007
+
+	/// Unique customer count
+	measure 'Distinct Customers' = DISTINCTCOUNT(Sales[CustomerKey])
+		formatString: #,##0
+		lineageTag: 10000001-0001-0001-0001-000000000008
+
+	column Amount
+		dataType: decimal
+		formatString: $ #,##0.00
+		lineageTag: a0000001-0001-0001-0001-000000000001
+		summarizeBy: sum
+		sourceColumn: Amount
+
+	column Quantity
+		dataType: int64
+		formatString: #,##0
+		lineageTag: a0000001-0001-0001-0001-000000000002
+		summarizeBy: sum
+		sourceColumn: Quantity
+
+	column 'Unit Price'
+		dataType: decimal
+		formatString: $ #,##0.00
+		lineageTag: a0000001-0001-0001-0001-000000000003
+		summarizeBy: none
+		sourceColumn: UnitPrice
+
+	column OrderDate
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: a0000001-0001-0001-0001-000000000004
+		summarizeBy: none
+		sourceColumn: OrderDate
+
+	column ProductKey
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: a0000001-0001-0001-0001-000000000005
+		summarizeBy: none
+		sourceColumn: ProductKey
+
+	column CustomerKey
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: a0000001-0001-0001-0001-000000000006
+		summarizeBy: none
+		sourceColumn: CustomerKey
+
+	partition Sales = m
+		mode: import
+		source =
+			let
+				Source = Sql.Database(Server, Database),
+				dbo_Sales = Source{[Schema="dbo",Item="Sales"]}[Data]
+			in
+				dbo_Sales
+
+	annotation PBI_ResultType = Table

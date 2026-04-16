@@ -1,0 +1,9 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures: true
+
+ref table Date
+ref table Sales
+ref table Product
+ref table Customer

@@ -1,0 +1,78 @@
+/// Date dimension table for time intelligence
+table Date
+	lineageTag: b1b2c3d4-e5f6-7890-abcd-ef1234567890
+	dataCategory: Time
+
+	column Date
+		dataType: dateTime
+		isKey
+		formatString: Short Date
+		lineageTag: b0000001-0001-0001-0001-000000000001
+		summarizeBy: none
+		sourceColumn: Date
+
+	column Year
+		dataType: int64
+		formatString: 0
+		lineageTag: b0000001-0001-0001-0001-000000000002
+		summarizeBy: none
+		sourceColumn: Year
+
+	column Quarter
+		dataType: string
+		lineageTag: b0000001-0001-0001-0001-000000000003
+		summarizeBy: none
+		sourceColumn: Quarter
+
+	column Month
+		dataType: string
+		lineageTag: b0000001-0001-0001-0001-000000000004
+		summarizeBy: none
+		sourceColumn: Month
+		sortByColumn: MonthNumber
+
+	column MonthNumber
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: b0000001-0001-0001-0001-000000000005
+		summarizeBy: none
+		sourceColumn: MonthNumber
+
+	column 'Day of Week'
+		dataType: string
+		lineageTag: b0000001-0001-0001-0001-000000000006
+		summarizeBy: none
+		sourceColumn: DayOfWeek
+		sortByColumn: 'Day of Week Number'
+
+	column 'Day of Week Number'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: b0000001-0001-0001-0001-000000000007
+		summarizeBy: none
+		sourceColumn: DayOfWeekNumber
+
+	hierarchy 'Date Hierarchy'
+		lineageTag: b0000001-h001-0001-0001-000000000001
+
+		level Year
+			column: Year
+
+		level Quarter
+			column: Quarter
+
+		level Month
+			column: Month
+
+	partition Date = m
+		mode: import
+		source =
+			let
+				Source = Sql.Database(Server, Database),
+				dbo_Date = Source{[Schema="dbo",Item="Date"]}[Data]
+			in
+				dbo_Date
+
+	annotation PBI_ResultType = Table

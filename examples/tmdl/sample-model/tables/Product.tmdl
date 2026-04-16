@@ -1,0 +1,71 @@
+/// Product dimension table
+table Product
+	lineageTag: c1b2c3d4-e5f6-7890-abcd-ef1234567890
+
+	/// Count of distinct products
+	measure '# Products' = DISTINCTCOUNT(Product[ProductKey])
+		formatString: #,##0
+		lineageTag: c0000001-m001-0001-0001-000000000001
+
+	column ProductKey
+		dataType: int64
+		isKey
+		isHidden
+		formatString: 0
+		lineageTag: c0000001-0001-0001-0001-000000000001
+		summarizeBy: none
+		sourceColumn: ProductKey
+
+	column 'Product Name'
+		dataType: string
+		lineageTag: c0000001-0001-0001-0001-000000000002
+		summarizeBy: none
+		sourceColumn: ProductName
+
+	column Category
+		dataType: string
+		lineageTag: c0000001-0001-0001-0001-000000000003
+		summarizeBy: none
+		sourceColumn: Category
+
+	column Subcategory
+		dataType: string
+		lineageTag: c0000001-0001-0001-0001-000000000004
+		summarizeBy: none
+		sourceColumn: Subcategory
+
+	column Color
+		dataType: string
+		lineageTag: c0000001-0001-0001-0001-000000000005
+		summarizeBy: none
+		sourceColumn: Color
+
+	column 'Unit Cost'
+		dataType: decimal
+		formatString: $ #,##0.00
+		lineageTag: c0000001-0001-0001-0001-000000000006
+		summarizeBy: none
+		sourceColumn: UnitCost
+
+	hierarchy 'Product Hierarchy'
+		lineageTag: c0000001-h001-0001-0001-000000000001
+
+		level Category
+			column: Category
+
+		level Subcategory
+			column: Subcategory
+
+		level 'Product Name'
+			column: 'Product Name'
+
+	partition Product = m
+		mode: import
+		source =
+			let
+				Source = Sql.Database(Server, Database),
+				dbo_Product = Source{[Schema="dbo",Item="Product"]}[Data]
+			in
+				dbo_Product
+
+	annotation PBI_ResultType = Table

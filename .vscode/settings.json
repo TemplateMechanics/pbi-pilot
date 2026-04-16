@@ -1,0 +1,59 @@
+{
+    "files.encoding": "utf8",
+    "files.eol": "\r\n",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "[tmdl]": {
+        "editor.insertSpaces": false,
+        "editor.tabSize": 1,
+        "editor.detectIndentation": false
+    },
+    "files.associations": {
+        "*.tmdl": "tmdl",
+        "*.pbip": "json",
+        "*.pbir": "json",
+        "*.pbism": "json"
+    },
+    "json.schemas": [
+        {
+            "fileMatch": ["**/definition/report.json"],
+            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/1.0.0/schema.json"
+        },
+        {
+            "fileMatch": ["**/definition/pages/*/page.json"],
+            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.0.0/schema.json"
+        },
+        {
+            "fileMatch": ["**/definition/pages/*/visuals/*/visual.json"],
+            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visual/1.2.0/schema.json"
+        },
+        {
+            "fileMatch": ["**/definition/pages/pages.json"],
+            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/pages/1.0.0/schema.json"
+        },
+        {
+            "fileMatch": ["**/definition/version.json"],
+            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/version/1.0.0/schema.json"
+        },
+        {
+            "fileMatch": ["**/definition/bookmarks/bookmarks.json"],
+            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmarks/1.0.0/schema.json"
+        },
+        {
+            "fileMatch": ["**/definition/reportExtensions.json"],
+            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/reportExtensions/1.0.0/schema.json"
+        },
+        {
+            "fileMatch": ["**/definition.pbir"],
+            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definitionProperties/2.0.0/schema.json"
+        },
+        {
+            "fileMatch": ["**/definition.pbism"],
+            "url": "https://developer.microsoft.com/json-schemas/fabric/item/semanticModel/definitionProperties/1.0.0/schema.json"
+        }
+    ],
+    "search.exclude": {
+        "**/.pbi/cache.abf": true,
+        "**/.pbi/localSettings.json": true
+    }
+}

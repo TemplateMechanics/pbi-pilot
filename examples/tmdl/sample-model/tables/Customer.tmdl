@@ -1,0 +1,65 @@
+/// Customer dimension table
+table Customer
+	lineageTag: d1b2c3d4-e5f6-7890-abcd-ef1234567890
+
+	column CustomerKey
+		dataType: int64
+		isKey
+		isHidden
+		formatString: 0
+		lineageTag: d0000001-0001-0001-0001-000000000001
+		summarizeBy: none
+		sourceColumn: CustomerKey
+
+	column 'Customer Name'
+		dataType: string
+		lineageTag: d0000001-0001-0001-0001-000000000002
+		summarizeBy: none
+		sourceColumn: CustomerName
+
+	column City
+		dataType: string
+		lineageTag: d0000001-0001-0001-0001-000000000003
+		summarizeBy: none
+		sourceColumn: City
+
+	column State
+		dataType: string
+		lineageTag: d0000001-0001-0001-0001-000000000004
+		summarizeBy: none
+		sourceColumn: State
+
+	column Country
+		dataType: string
+		lineageTag: d0000001-0001-0001-0001-000000000005
+		summarizeBy: none
+		sourceColumn: Country
+
+	column Segment
+		dataType: string
+		lineageTag: d0000001-0001-0001-0001-000000000006
+		summarizeBy: none
+		sourceColumn: Segment
+
+	hierarchy Geography
+		lineageTag: d0000001-h001-0001-0001-000000000001
+
+		level Country
+			column: Country
+
+		level State
+			column: State
+
+		level City
+			column: City
+
+	partition Customer = m
+		mode: import
+		source =
+			let
+				Source = Sql.Database(Server, Database),
+				dbo_Customer = Source{[Schema="dbo",Item="Customer"]}[Data]
+			in
+				dbo_Customer
+
+	annotation PBI_ResultType = Table
