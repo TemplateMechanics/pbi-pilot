@@ -100,11 +100,12 @@ foreach ($file in $tmdlFiles) {
             if ($line -match '^\t[^\t]') {
                 # 1-tab line = TMDL property, still in expression object
             } elseif ($line -match '^\t{2,}') {
-                # 2+ tab line = M expression body
+                # 2+ tab line = M expression body — skip generic indentation checks
                 # Check for /// inside M expression body (should be // only)
                 if ($line -match '^\t{2,}///') {
                     Add-Error "$($file.Name):$lineNum" "Triple-slash /// inside M expression body of '$topLevelExprName' will be stripped by TMDL parser. Use // for M comments"
                 }
+                continue
             } elseif ($line -match '^\S' -and $line -notmatch '^\s*$') {
                 # New top-level object — end of expression
                 $inTopLevelExpression = $false
