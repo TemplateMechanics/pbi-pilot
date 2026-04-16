@@ -83,11 +83,36 @@ foreach ($file in $tmdlFiles) {
     $lines = Get-Content $file.FullName -ErrorAction SilentlyContinue
     $lineNum = 0
     $inMExpression = $false
+    $inTopLevelExpression = $false
+    $topLevelExprName = ""
 
     foreach ($line in $lines) {
         $lineNum++
 
-        # Track M expression blocks (partition source = ... through blank line or next keyword)
+        # Track top-level expression blocks (expression Name = ... multi-line)
+        if ($line -match '^expression\s+(\S+)\s*=$') {
+            $inTopLevelExpression = $true
+            $topLevelExprName = $Matches[1]
+            continue
+        }
+        if ($inTopLevelExpression) {
+            # Lines at 2+ tabs are M expression body; 1 tab = TMDL property; 0 tabs = end
+            if ($line -match '^\t[^\t]') {
+                # 1-tab line = TMDL property, still in expression object
+            } elseif ($line -match '^\t{2,}') {
+                # 2+ tab line = M expression body
+                # Check for /// inside M expression body (should be // only)
+                if ($line -match '^\t{2,}///') {
+                    Add-Error "$($file.Name):$lineNum" "Triple-slash /// inside M expression body of '$topLevelExprName' will be stripped by TMDL parser. Use // for M comments"
+                }
+            } elseif ($line -match '^\S' -and $line -notmatch '^\s*$') {
+                # New top-level object — end of expression
+                $inTopLevelExpression = $false
+                $topLevelExprName = ""
+            }
+        }
+
+        # Track M expression blocks in partitions (source = ... through blank line or next keyword)
         if ($line -match '^\t+source\s*=$') { $inMExpression = $true; continue }
         if ($inMExpression -and ($line -match '^\s*$' -or $line -match '^\t(measure|column|partition|hierarchy|annotation)\s')) {
             $inMExpression = $false
@@ -102,6 +127,15 @@ foreach ($file in $tmdlFiles) {
         # Check for mixed tabs and spaces
         if ($line -match '^\t+ +\S' -or $line -match '^ +\t+\S') {
             Add-Error "$($file.Name):$lineNum" "Mixed tabs and spaces in indentation"
+        }
+    }
+
+    # Check multi-line expressions have M body at 2+ tabs (not 1 tab)
+    if ($file.Name -eq "expressions.tmdl") {
+        $exprBlocks = [regex]::Matches($content, '(?m)^expression\s+(\S+)\s*=\s*\r?\n(\t[^\t\r\n])')
+        foreach ($eb in $exprBlocks) {
+            $eName = $eb.Groups[1].Value
+            Add-Error $file.Name "Expression '$eName' has M body at 1 tab - must use 2+ tabs so TMDL properties are not parsed as M code"
         }
     }
 
