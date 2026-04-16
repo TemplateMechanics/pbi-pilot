@@ -17,31 +17,31 @@
     "json.schemas": [
         {
             "fileMatch": ["**/definition/report.json"],
-            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/1.0.0/schema.json"
+            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/3.2.0/schema.json"
         },
         {
             "fileMatch": ["**/definition/pages/*/page.json"],
-            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.0.0/schema.json"
+            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json"
         },
         {
             "fileMatch": ["**/definition/pages/*/visuals/*/visual.json"],
-            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visual/1.2.0/schema.json"
+            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json"
         },
         {
             "fileMatch": ["**/definition/pages/pages.json"],
-            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/pages/1.0.0/schema.json"
+            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/pagesMetadata/1.0.0/schema.json"
         },
         {
             "fileMatch": ["**/definition/version.json"],
-            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/version/1.0.0/schema.json"
+            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/versionMetadata/1.0.0/schema.json"
         },
         {
             "fileMatch": ["**/definition/bookmarks/bookmarks.json"],
-            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmarks/1.0.0/schema.json"
+            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmarksMetadata/1.0.0/schema.json"
         },
         {
             "fileMatch": ["**/definition/reportExtensions.json"],
-            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/reportExtensions/1.0.0/schema.json"
+            "url": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/reportExtension/1.0.0/schema.json"
         },
         {
             "fileMatch": ["**/definition.pbir"],

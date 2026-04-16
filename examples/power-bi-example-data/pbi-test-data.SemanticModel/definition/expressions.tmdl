@@ -1,0 +1,16 @@
+/// Shared expressions and parameters for the semantic model.
+/// Users should update SampleDataPath to match their local PBI Desktop install.
+
+expression SampleDataPath =
+	let
+		/// Default path for Microsoft Store install of Power BI Desktop.
+		/// MSI install path: "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData"
+		Source = "C:\Program Files\WindowsApps\Microsoft.MicrosoftPowerBIDesktop_2.152.1279.0_x64__8wekyb3d8bbwe\bin\SampleData"
+	in
+		Source
+	lineageTag: c4e8f2a6-3b5d-7e9f-1a2c-4d6e8f0a2b4c
+	queryGroup: Parameters
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Text

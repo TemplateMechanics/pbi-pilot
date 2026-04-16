@@ -1,11 +1,10 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.0.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
   "name": "sales_overview",
   "displayName": "Sales Overview",
   "displayOption": "FitToPage",
   "height": 720,
   "width": 1280,
-  "filters": [],
   "background": {
     "color": {
       "solid": {
@@ -21,6 +20,5 @@
       }
     },
     "transparency": 0
-  },
-  "annotations": []
+  }
 }

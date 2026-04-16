@@ -271,11 +271,40 @@ relationship rel_Sales_Customer
 
 ### Shared Expressions / Parameters (expressions.tmdl)
 
+Use parameters to avoid hardcoded paths. This lets each user update one value instead of editing M queries in every table.
+
+```tmdl
+/// Parameterized file path — user updates this to match their PBI Desktop install
+expression SampleDataPath =
+	let
+		/// Store install (default):
+		Source = "C:\Program Files\WindowsApps\Microsoft.MicrosoftPowerBIDesktop_...\bin\SampleData"
+		/// MSI install alternative:
+		/// Source = "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData"
+	in
+		Source
+	lineageTag: c4e8f2a6-3b5d-7e9f-1a2c-4d6e8f0a2b4c
+	queryGroup: Parameters
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Text
+```
+
+Then reference the parameter in table partition M queries:
+```m
+Source = Excel.Workbook(File.Contents(#"SampleDataPath" & "\Financial Sample.xlsx"), null, true)
+```
+
+Server/database connection parameters:
 ```tmdl
 expression Server = "localhost" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
 
 expression Database = "AdventureWorks" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+```
 
+Shared date table query:
+```tmdl
 /// Shared date table query
 expression DateQuery =
 		let
@@ -401,13 +430,19 @@ All schemas are at: `https://developer.microsoft.com/json-schemas/fabric/item/re
 
 | File | Schema Path |
 |------|------------|
-| report.json | `report/1.0.0/schema.json` |
-| version.json | `version/1.0.0/schema.json` |
-| page.json | `page/1.0.0/schema.json` |
-| visual.json | `visual/1.2.0/schema.json` |
-| pages.json | `pages/1.0.0/schema.json` |
-| bookmarks.json | `bookmarks/1.0.0/schema.json` |
-| reportExtensions.json | `reportExtensions/1.0.0/schema.json` |
+| report.json | `report/{version}/schema.json` |
+| version.json | `versionMetadata/{version}/schema.json` |
+| page.json | `page/{version}/schema.json` |
+| visual.json | `visualContainer/{version}/schema.json` |
+| pages.json | `pagesMetadata/{version}/schema.json` |
+| bookmark.json | `bookmark/{version}/schema.json` |
+| reportExtensions.json | `reportExtension/{version}/schema.json` |
+
+> **IMPORTANT — Schema Version Detection**: Schema versions change with each PBI Desktop release.
+> Do NOT hardcode versions. Instead, check existing `$schema` URLs in the project's JSON files
+> (especially `report.json` and `page.json`) to determine what versions the current PBI Desktop uses.
+> All schema versions for a report are published at:
+> https://github.com/microsoft/json-schemas/tree/main/fabric/item/report/definition
 
 ### version.json
 
@@ -481,7 +516,7 @@ The visual.json file defines a single visual's position, type, data bindings, an
 
 ```json
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visual/1.2.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "sales_bar_chart",
   "position": {
     "x": 40,
@@ -529,9 +564,7 @@ The visual.json file defines a single visual's position, type, data bindings, an
     "visualContainerObjects": {
       "title": [{ "properties": { "text": { "expr": { "Literal": { "Value": "'Sales by Category'" } } } } }]
     }
-  },
-  "filters": [],
-  "annotations": []
+  }
 }
 ```
 
@@ -568,7 +601,13 @@ The visual.json file defines a single visual's position, type, data bindings, an
 
 ### Query Field Reference Patterns
 
-**Column reference:**
+> **CRITICAL — Aggregation Required for Numeric Columns in Value Roles:**
+> When placing a numeric column in a value role (card `Values`, chart `Y` axis, etc.),
+> you MUST wrap it in an `Aggregation` expression. Bare `Column` references only work
+> for categorical/grouping roles (chart `Category` axis, slicer `Values`, etc.).
+> Without the `Aggregation` wrapper, the visual will render empty or be invisible.
+
+**Column reference (for category/grouping roles only):**
 ```json
 {
   "field": {
@@ -580,7 +619,28 @@ The visual.json file defines a single visual's position, type, data bindings, an
 }
 ```
 
-**Measure reference:**
+**Aggregated column reference (for value roles — Sum, Avg, Count, etc.):**
+```json
+{
+  "field": {
+    "Aggregation": {
+      "Expression": {
+        "Column": {
+          "Expression": { "SourceRef": { "Entity": "TableName" } },
+          "Property": "ColumnName"
+        }
+      },
+      "Function": 0
+    }
+  }
+}
+```
+
+Aggregation Function values: 0=Sum, 1=Average, 2=DistinctCount, 3=Min, 4=Max, 5=Count, 6=Median, 7=StdDev, 8=Variance
+
+When using Aggregation, the `queryRef` should reflect it, e.g. `"Sum(TableName.ColumnName)"`.
+
+**Measure reference (no aggregation needed — measures are pre-aggregated):**
 ```json
 {
   "field": {
@@ -615,7 +675,7 @@ The visual.json file defines a single visual's position, type, data bindings, an
 
 ```json
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visual/1.2.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "date_slicer",
   "position": { "x": 40, "y": 20, "z": 500, "width": 200, "height": 60, "tabOrder": 0 },
   "visual": {
@@ -641,8 +701,7 @@ The visual.json file defines a single visual's position, type, data bindings, an
     "objects": {
       "data": [{ "properties": { "mode": { "expr": { "Literal": { "Value": "'Dropdown'" } } } } }]
     }
-  },
-  "filters": []
+  }
 }
 ```
 
@@ -650,9 +709,11 @@ The visual.json file defines a single visual's position, type, data bindings, an
 
 ## Card Visual Example
 
+Card with a **measure** (pre-aggregated, no Aggregation wrapper needed):
+
 ```json
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visual/1.2.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "total_sales_card",
   "position": { "x": 40, "y": 20, "z": 1000, "width": 200, "height": 120, "tabOrder": 0 },
   "visual": {
@@ -679,8 +740,47 @@ The visual.json file defines a single visual's position, type, data bindings, an
     "visualContainerObjects": {
       "title": [{ "properties": { "text": { "expr": { "Literal": { "Value": "'Total Revenue'" } } } } }]
     }
-  },
-  "filters": []
+  }
+}
+```
+
+Card with a **column** (must use Aggregation wrapper):
+
+```json
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "sum_of_sales_card",
+  "position": { "x": 260, "y": 20, "z": 1001, "width": 200, "height": 120, "tabOrder": 1 },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": { "SourceRef": { "Entity": "Sales" } },
+                      "Property": "Amount"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(Sales.Amount)",
+              "active": true
+            }
+          ]
+        }
+      }
+    },
+    "objects": {},
+    "visualContainerObjects": {
+      "title": [{ "properties": { "text": { "expr": { "Literal": { "Value": "'Total Sales Amount'" } } } } }]
+    }
+  }
 }
 ```
 

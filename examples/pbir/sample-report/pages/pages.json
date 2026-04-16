@@ -1,8 +1,9 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/pages/1.0.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/pagesMetadata/1.0.0/schema.json",
   "pageOrder": [
     "sales_overview",
-    "product_analysis"
+    "product_analysis",
+    "customer_insights"
   ],
   "activePageName": "sales_overview"
 }

@@ -49,6 +49,20 @@ table Sales
 		formatString: #,##0
 		lineageTag: 10000001-0001-0001-0001-000000000008
 
+	/// Rolling 12-month sales total
+	measure 'Sales R12M' =
+			CALCULATE(
+				[Total Sales],
+				DATESINPERIOD('Date'[Date], MAX('Date'[Date]), -12, MONTH)
+			)
+		formatString: $ #,##0.00
+		lineageTag: 10000001-0001-0001-0001-000000000009
+
+	/// Sales per customer
+	measure 'Sales per Customer' = DIVIDE([Total Sales], [Distinct Customers])
+		formatString: $ #,##0.00
+		lineageTag: 10000001-0001-0001-0001-00000000000a
+
 	column Amount
 		dataType: decimal
 		formatString: $ #,##0.00

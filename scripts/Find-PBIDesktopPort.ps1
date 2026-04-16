@@ -3,9 +3,13 @@
     Discovers the local Analysis Services port that Power BI Desktop is using.
 
 .DESCRIPTION
-    Power BI Desktop runs a local Analysis Services (msmdsrv.exe) instance on a 
-    dynamically assigned port. This script finds that port by scanning the 
-    AnalysisServicesWorkspaces folder for the msmdsrv.port.txt file.
+    Power BI Desktop runs a local Analysis Services (msmdsrv.exe) instance on a
+    dynamically assigned port. This script finds that port using a multi-strategy 
+    approach that works for both MSI and Microsoft Store installs:
+
+    1. Scans known port-file locations for msmdsrv.port.txt
+    2. Falls back to parsing the msmdsrv.exe command-line data directory
+    3. Falls back to netstat to find the listening port by PID
 
     The port can then be used to connect via TOM (Tabular Object Model) to push
     semantic model changes without restarting Power BI Desktop.
@@ -27,15 +31,18 @@ param()
 
 $ErrorActionPreference = 'Stop'
 
-# Power BI Desktop stores workspace data in the user's local app data
+# ── Strategy 1: Scan known port-file locations ───────────────────────
+# MSI install, Store install (user profile), Store install (package cache)
 $searchPaths = @(
     "$env:LOCALAPPDATA\Microsoft\Power BI Desktop\AnalysisServicesWorkspaces",
+    "$env:USERPROFILE\Microsoft\Power BI Desktop Store App\AnalysisServicesWorkspaces",
     "$env:LOCALAPPDATA\Packages\Microsoft.MicrosoftPowerBIDesktop_8wekyb3d8bbwe\LocalCache\Local\Microsoft\Power BI Desktop\AnalysisServicesWorkspaces"
 )
 
 $portFile = $null
 foreach ($basePath in $searchPaths) {
     if (Test-Path $basePath) {
+        Write-Verbose "Checking: $basePath"
         $portFile = Get-ChildItem -Path $basePath -Filter "msmdsrv.port.txt" -Recurse -ErrorAction SilentlyContinue |
             Sort-Object LastWriteTime -Descending |
             Select-Object -First 1
@@ -43,25 +50,53 @@ foreach ($basePath in $searchPaths) {
     }
 }
 
-if (-not $portFile) {
-    # Fallback: check running msmdsrv.exe processes for the port
-    $pbiProcess = Get-Process -Name "msmdsrv" -ErrorAction SilentlyContinue |
-        Where-Object { $_.Path -like "*Power BI*" } |
-        Select-Object -First 1
-
-    if ($pbiProcess) {
-        Write-Warning "Found msmdsrv.exe process (PID: $($pbiProcess.Id)) but could not locate port file."
-        Write-Warning "Try using netstat to find the listening port:"
-        Write-Warning "  netstat -ano | findstr $($pbiProcess.Id)"
-    }
-
-    throw "Could not find Power BI Desktop's Analysis Services port file. Is Power BI Desktop running with a file open?"
+if ($portFile) {
+    $portRaw = (Get-Content $portFile.FullName -Raw) -replace '[^\d]', ''
+    $port = [int]$portRaw
+    Write-Host "Found Power BI Desktop Analysis Services instance on localhost:$port" -ForegroundColor Green
+    Write-Host "  Method:   port file" -ForegroundColor DarkGray
+    Write-Host "  Location: $($portFile.FullName)" -ForegroundColor DarkGray
+    Write-Host "  Modified: $($portFile.LastWriteTime)" -ForegroundColor DarkGray
+    return $port
 }
 
-$port = [int](Get-Content $portFile.FullName -Raw).Trim()
+# ── Strategy 2: Parse msmdsrv.exe command line for data directory ────
+Write-Verbose "Port file not found in known locations, checking msmdsrv process..."
+$msmdsrvProc = Get-Process -Name "msmdsrv" -ErrorAction SilentlyContinue |
+    Where-Object { $_.Path -like "*Power BI*" } |
+    Select-Object -First 1
 
-Write-Host "Found Power BI Desktop Analysis Services instance on localhost:$port" -ForegroundColor Green
-Write-Host "  Port file: $($portFile.FullName)" -ForegroundColor DarkGray
-Write-Host "  Last modified: $($portFile.LastWriteTime)" -ForegroundColor DarkGray
+if ($msmdsrvProc) {
+    $wmiProc = Get-CimInstance Win32_Process -Filter "ProcessId = $($msmdsrvProc.Id)" -ErrorAction SilentlyContinue
+    if ($wmiProc -and $wmiProc.CommandLine -match '-s\s+"?([^"]+)"?') {
+        $dataDir = $Matches[1]
+        Write-Verbose "msmdsrv data directory: $dataDir"
+        $portFilePath = Join-Path $dataDir "msmdsrv.port.txt"
+        if (Test-Path $portFilePath) {
+            $port = [int]((Get-Content $portFilePath -Raw) -replace '[^\d]', '')
+            Write-Host "Found Power BI Desktop Analysis Services instance on localhost:$port" -ForegroundColor Green
+            Write-Host "  Method:   msmdsrv command line" -ForegroundColor DarkGray
+            Write-Host "  Location: $portFilePath" -ForegroundColor DarkGray
+            return $port
+        }
+    }
 
-return $port
+    # ── Strategy 3: netstat fallback ─────────────────────────────────
+    Write-Verbose "Port file not in data directory, trying netstat for PID $($msmdsrvProc.Id)..."
+    $netstatLine = netstat -ano 2>$null |
+        Select-String "LISTENING" |
+        Select-String "\s$($msmdsrvProc.Id)\s*$" |
+        Select-Object -First 1
+
+    if ($netstatLine -and $netstatLine -match ':(\d+)\s+\S+\s+LISTENING') {
+        $port = [int]$Matches[1]
+        Write-Host "Found Power BI Desktop Analysis Services instance on localhost:$port" -ForegroundColor Green
+        Write-Host "  Method:   netstat (PID $($msmdsrvProc.Id))" -ForegroundColor DarkGray
+        Write-Warning "Port file was not found - this port was inferred from the running process."
+        return $port
+    }
+
+    Write-Warning "Found msmdsrv.exe (PID: $($msmdsrvProc.Id)) but could not determine port."
+}
+
+throw "Could not find Power BI Desktop's Analysis Services port. Is Power BI Desktop running with a file open?"

@@ -17,6 +17,7 @@ Power BI Desktop's PBIP format saves semantic models (TMDL) and reports (PBIR) a
 | Component | Purpose |
 |---|---|
 | `.github/copilot-instructions.md` | Workspace-level instructions for GitHub Copilot — always loaded |
+| `CLAUDE.md` | Workspace-level instructions for Claude Code — always loaded |
 | `skills/powerbi-pbip/SKILL.md` | Copilot skill with complete TMDL, PBIR, and PBIP reference |
 | `agents/powerbi.agent.md` | Agent mode for conversational Power BI development |
 | `scripts/` | PowerShell automation for port discovery, refresh, and validation |
@@ -42,12 +43,7 @@ Or add the harness as a second workspace folder in VS Code.
 
 ### 2. Enable PBIP + TMDL + PBIR in Power BI Desktop
 
-In Power BI Desktop: **File → Options → Preview features**, enable:
-- ✅ Power BI Project (.pbip) save option
-- ✅ Store semantic model using TMDL format
-- ✅ Store reports using enhanced metadata format (PBIR)
-
-Save your file as `.pbip`.
+Recent versions (2025+) have these enabled by default. See [Prerequisites](#prerequisites) if you need to verify.
 
 ### 3. Start talking to your AI
 
@@ -87,10 +83,22 @@ Close Power BI Desktop → Reopen the `.pbip` file.
 
 ## Prerequisites
 
-- [Power BI Desktop](https://powerbi.microsoft.com/desktop/) (latest version)
+- [Power BI Desktop](https://powerbi.microsoft.com/desktop/) (latest version, MSI or Microsoft Store)
 - [VS Code](https://code.visualstudio.com/) with GitHub Copilot or another AI coding assistant
 - [TMDL VS Code Extension](https://marketplace.visualstudio.com/items?itemName=analysis-services.TMDL) (recommended)
 - PowerShell 5.1+ (comes with Windows)
+
+### Power BI Desktop Setup
+
+Recent versions of Power BI Desktop (2025+) enable PBIP, TMDL, and PBIR by default. To verify or enable on older versions:
+
+1. In PBI Desktop: **File → Options → Preview features**, check that these are enabled:
+   - ✅ Power BI Project (.pbip) save option
+   - ✅ Store semantic model using TMDL format
+   - ✅ Store reports using enhanced metadata format (PBIR)
+2. **Save as .pbip** — Use **File → Save as** and select the Power BI Project format
+
+> **Note:** The TOM refresh scripts auto-install the `Microsoft.AnalysisServices` NuGet package on first run. This requires .NET Framework 4.5+ (included with Windows) for PowerShell 5.1, or .NET 6+ for PowerShell 7.
 
 ## How It Works
 
