@@ -102,7 +102,7 @@ foreach ($file in $tmdlFiles) {
             } elseif ($line -match '^\t{2,}') {
                 # 2+ tab line = M expression body — skip generic indentation checks
                 # Check for /// inside M expression body (should be // only)
-                if ($line -match '^\t{2,}///') {
+                if ($line -match '^\t{2,}\s*///') {
                     Add-Error "$($file.Name):$lineNum" "Triple-slash /// inside M expression body of '$topLevelExprName' will be stripped by TMDL parser. Use // for M comments"
                 }
                 continue
