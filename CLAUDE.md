@@ -17,7 +17,7 @@ Read `skills/powerbi-pbip/SKILL.md` — it contains the complete reference for T
 2. **Generate unique GUIDs** for every new `lineageTag` — format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
 3. **Save as UTF-8 without BOM**, CRLF line endings
 4. **Don't edit** `LocalDateTable_*` auto-generated tables
-5. **After editing TMDL/PBIR files**, remind the user to refresh Power BI Desktop (close/reopen or use automation scripts in `scripts/`)
+5. **After editing TMDL/PBIR files**, apply changes using the automation scripts in `scripts/` (see Automation Scripts section below)
 6. **Report visuals** reference semantic model objects by exact name — Entity must match table name, Property must match column/measure name
 7. **When adding pages**, also update `pages.json` pageOrder array
 8. **When adding measures**, always include `lineageTag` and `formatString` properties
@@ -45,17 +45,17 @@ PowerShell scripts in `scripts/` are **required tools** for operational tasks. A
 |------|--------|---------|
 | **Open a PBIP file** in PBI Desktop | `Open-PBIPFile.ps1` | `./scripts/Open-PBIPFile.ps1 -PbipPath "./MyReport.pbip" -Wait` |
 | **Validate** TMDL/PBIR files | `Validate-PBIP.ps1` | `./scripts/Validate-PBIP.ps1 -Path .` |
-| **Refresh** the semantic model (no restart) | `Invoke-SemanticModelRefresh.ps1` | `./scripts/Invoke-SemanticModelRefresh.ps1 -PbipPath "./MyReport.pbip"` |
+| **Refresh** the semantic model (requires PBI Desktop running with the PBIP open) | `Invoke-SemanticModelRefresh.ps1` | `./scripts/Invoke-SemanticModelRefresh.ps1 -PbipPath "./MyReport.pbip"` |
 | **Restart** PBI Desktop | `Restart-PBIDesktop.ps1` | `./scripts/Restart-PBIDesktop.ps1 -PbipPath "./MyReport.pbip" -Force` |
 | **Find** the Analysis Services port | `Find-PBIDesktopPort.ps1` | `./scripts/Find-PBIDesktopPort.ps1` |
 | **Check** PBIR schema versions | `Get-PBIRSchemaVersions.ps1` | `./scripts/Get-PBIRSchemaVersions.ps1` |
 
 ### When to use which script:
 - **Opening files**: Always use `Open-PBIPFile.ps1`. Never use `start`, `Invoke-Item`, or manual process launching.
-- **After editing TMDL files**: Run `Invoke-SemanticModelRefresh.ps1 -PbipPath "./MyReport.pbip"` to push changes without restarting.
+- **After editing TMDL files**: Ensure PBI Desktop is running with the PBIP open (use `Open-PBIPFile.ps1 -Wait` first if needed), then run `Invoke-SemanticModelRefresh.ps1 -PbipPath "./MyReport.pbip"` to push changes without restarting.
 - **After editing PBIR files**: Run `Restart-PBIDesktop.ps1 -PbipPath "./MyReport.pbip" -Force` (PBIR changes require a restart).
 - **After any edit**: Run `Validate-PBIP.ps1` to catch errors before refreshing.
-- **Troubleshooting**: Run `Find-PBIDesktopPort.ps1` to confirm PBI Desktop is running and get the port.
+- **Troubleshooting**: Run `Find-PBIDesktopPort.ps1` to confirm PBI Desktop is running and get the port. Requires PBI Desktop to already have a PBIP open.
 
 ## Validation
 
