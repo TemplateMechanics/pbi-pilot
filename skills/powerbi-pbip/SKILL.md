@@ -279,16 +279,21 @@ expression SampleDataPath =
 		let
 			MsiPath = "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData",
 			StoreBase = "C:\Program Files\WindowsApps",
-			StoreMatch = try Table.SelectRows(
+			StoreMatches = Table.SelectRows(
 				Folder.Contents(StoreBase),
 				each Text.StartsWith([Name], "Microsoft.MicrosoftPowerBIDesktop_")
 					and Text.Contains([Name], "_x64_")
-			){0}[Folder Path] & Table.SelectRows(
-				Folder.Contents(StoreBase),
-				each Text.StartsWith([Name], "Microsoft.MicrosoftPowerBIDesktop_")
-					and Text.Contains([Name], "_x64_")
-			){0}[Name] & "\bin\SampleData" otherwise null,
-			Source = if StoreMatch <> null then StoreMatch else MsiPath
+			),
+			StoreMatch = try StoreMatches{0}[Folder Path] & StoreMatches{0}[Name] & "\bin\SampleData" otherwise null,
+			PathExists = (path) => not (try Folder.Contents(path))[HasError],
+			Source =
+				if StoreMatch <> null and PathExists(StoreMatch) then StoreMatch
+				else if PathExists(MsiPath) then MsiPath
+				else error Error.Record(
+					"SampleDataPath",
+					"Cannot find Power BI Desktop SampleData folder. Install PBI Desktop (Store or MSI) or update this expression.",
+					[StorePath = StoreMatch, MsiPath = MsiPath]
+				)
 		in
 			Source
 	lineageTag: c4e8f2a6-3b5d-7e9f-1a2c-4d6e8f0a2b4c
