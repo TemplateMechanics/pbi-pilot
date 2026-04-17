@@ -161,11 +161,44 @@ table financials
 		mode: import
 		source =
 				let
-				 Source = Excel.Workbook(File.Contents(#"SampleDataPath" & "\Financial Sample.xlsx"), null, true),
+				    // Auto-detect PBI Desktop SampleData folder (Store or MSI install)
+				    MsiPath = "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData",
+				    StoreBase = "C:\Program Files\WindowsApps",
+				    StoreContents = try Folder.Contents(StoreBase) otherwise #table({"Name", "Folder Path"}, {}),
+				    StoreMatches = Table.Sort(
+				        Table.AddColumn(
+				            Table.SelectRows(
+				                StoreContents,
+				                each Text.StartsWith([Name], "Microsoft.MicrosoftPowerBIDesktop_")
+				                    and Text.Contains([Name], "_x64_")
+				            ),
+				            "SortKey",
+				            each try Text.Combine(List.Transform(
+				                Text.Split(Text.BetweenDelimiters([Name], "Microsoft.MicrosoftPowerBIDesktop_", "_x64_"), "."),
+				                each Text.PadStart(_, 10, "0")
+				            ), ".") otherwise ""
+				        ),
+				        {{"SortKey", Order.Descending}}
+				    ),
+				    PathExists = (path) => not (try Folder.Contents(path))[HasError],
+				    StoreCandidates = List.Transform(
+				        Table.ToRecords(StoreMatches),
+				        each [Folder Path] & [Name] & "\bin\SampleData"
+				    ),
+				    StoreMatch = List.First(List.Select(StoreCandidates, each PathExists(_)), null),
+				    SampleDataPath =
+				        if StoreMatch <> null then StoreMatch
+				        else if PathExists(MsiPath) then MsiPath
+				        else error Error.Record(
+				            "SampleDataPath",
+				            "Cannot find Power BI Desktop SampleData folder. Install PBI Desktop (Store or MSI) or update this expression.",
+				            [StoreBase = StoreBase, StoreCandidates = StoreCandidates, MsiPath = MsiPath]
+				        ),
+				    Source = Excel.Workbook(File.Contents(SampleDataPath & "\Financial Sample.xlsx"), null, true),
 				    financials_Table = Source{[Item="financials",Kind="Table"]}[Data],
 				    #"Changed Type" = Table.TransformColumnTypes(financials_Table,{{"Segment", type text}, {"Country", type text}, {"Product", type text}, {"Discount Band", type text}, {"Units Sold", type number}, {"Manufacturing Price", Int64.Type}, {"Sale Price", Int64.Type}, {"Gross Sales", type number}, {"Discounts", type number}, {"Sales", type number}, {"COGS", type number}, {"Profit", type number}, {"Date", type date}, {"Month Number", Int64.Type}, {"Month Name", type text}, {"Year", Int64.Type}})
 				in
-				 #"Changed Type"
+				    #"Changed Type"
 
 	annotation PBI_ResultType = Table
 

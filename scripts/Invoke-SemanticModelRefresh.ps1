@@ -22,9 +22,16 @@
 .PARAMETER PbipPath
     Alternative: path to the .SemanticModel folder. The script will append \definition.
 
+.PARAMETER Refresh
+    After applying TMDL changes, trigger a full data refresh (re-loads data from sources).
+    Without this switch, only schema changes are pushed.
+
 .EXAMPLE
     $port = .\Find-PBIDesktopPort.ps1
     .\Invoke-SemanticModelRefresh.ps1 -Port $port -TmdlPath ".\MyReport.SemanticModel\definition"
+
+.EXAMPLE
+    .\Invoke-SemanticModelRefresh.ps1 -PbipPath ".\MyReport.pbip" -Refresh
 #>
 [CmdletBinding()]
 param(
@@ -35,7 +42,10 @@ param(
     [string]$TmdlPath,
 
     [Parameter(Mandatory = $false)]
-    [string]$PbipPath
+    [string]$PbipPath,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$Refresh
 )
 
 $ErrorActionPreference = 'Stop'
@@ -262,6 +272,14 @@ try {
     $targetDb.Model.SaveChanges()
 
     Write-Host "`n  SUCCESS: Semantic model updated in Power BI Desktop!" -ForegroundColor Green
+
+    if ($Refresh) {
+        Write-Host "`n  Triggering data refresh (loading data from sources)..." -ForegroundColor Cyan
+        $targetDb.Model.RequestRefresh([Microsoft.AnalysisServices.Tabular.RefreshType]::Full)
+        $targetDb.Model.SaveChanges()
+        Write-Host "  SUCCESS: Data refresh completed!" -ForegroundColor Green
+    }
+
     Write-Host "  Changes should now be visible in the report." -ForegroundColor Green
 } catch {
     Write-Host "`n  ERROR: $($_.Exception.Message)" -ForegroundColor Red
