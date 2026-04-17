@@ -42,14 +42,14 @@ PowerShell scripts in `scripts/` are **required tools** for operational tasks. A
 |------|--------|---------|
 | **Open a PBIP file** in PBI Desktop | `Open-PBIPFile.ps1` | `.\scripts\Open-PBIPFile.ps1 -PbipPath ".\MyReport.pbip" -Wait` |
 | **Validate** TMDL/PBIR files | `Validate-PBIP.ps1` | `.\scripts\Validate-PBIP.ps1 -Path .` |
-| **Refresh** the semantic model (no restart) | `Invoke-SemanticModelRefresh.ps1` | `.\scripts\Invoke-SemanticModelRefresh.ps1` |
-| **Restart** PBI Desktop | `Restart-PBIDesktop.ps1` | `.\scripts\Restart-PBIDesktop.ps1 -Force` |
+| **Refresh** the semantic model (no restart) | `Invoke-SemanticModelRefresh.ps1` | `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath ".\MyReport.pbip"` |
+| **Restart** PBI Desktop | `Restart-PBIDesktop.ps1` | `.\scripts\Restart-PBIDesktop.ps1 -PbipPath ".\MyReport.pbip" -Force` |
 | **Find** the Analysis Services port | `Find-PBIDesktopPort.ps1` | `.\scripts\Find-PBIDesktopPort.ps1` |
 | **Check** PBIR schema versions | `Get-PBIRSchemaVersions.ps1` | `.\scripts\Get-PBIRSchemaVersions.ps1` |
 
 ### When to use which script:
 - **Opening files**: Always use `Open-PBIPFile.ps1`. Never use `start`, `Invoke-Item`, or manual process launching.
-- **After editing TMDL files**: Run `Invoke-SemanticModelRefresh.ps1` to push changes without restarting.
-- **After editing PBIR files**: Run `Restart-PBIDesktop.ps1 -Force` (PBIR changes require a non-interactive restart).
+- **After editing TMDL files**: Run `Invoke-SemanticModelRefresh.ps1 -PbipPath ".\MyReport.pbip"` to push changes without restarting.
+- **After editing PBIR files**: Run `Restart-PBIDesktop.ps1 -PbipPath ".\MyReport.pbip" -Force` (PBIR changes require a non-interactive restart).
 - **After any edit**: Run `Validate-PBIP.ps1` to catch errors before refreshing.
 - **Troubleshooting**: Run `Find-PBIDesktopPort.ps1` to confirm PBI Desktop is running and get the port.

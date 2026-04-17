@@ -50,8 +50,8 @@ Never use manual shell commands (`start`, `Invoke-Item`, `Start-Process`) for ta
 |------|---------|
 | **Open** a PBIP file in PBI Desktop | `.\scripts\Open-PBIPFile.ps1 -PbipPath "path" -Wait` |
 | **Validate** files after edits | `.\scripts\Validate-PBIP.ps1 -Path .` |
-| **Refresh** semantic model (no restart) | `.\scripts\Invoke-SemanticModelRefresh.ps1` |
-| **Restart** PBI Desktop | `.\scripts\Restart-PBIDesktop.ps1 -Force` |
+| **Refresh** semantic model (no restart) | `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath ".\path.pbip"` |
+| **Restart** PBI Desktop | `.\scripts\Restart-PBIDesktop.ps1 -PbipPath ".\path.pbip" -Force` |
 | **Find** Analysis Services port | `.\scripts\Find-PBIDesktopPort.ps1` |
 | **Check** PBIR schema versions | `.\scripts\Get-PBIRSchemaVersions.ps1` |
 
@@ -64,8 +64,8 @@ Never use manual shell commands (`start`, `Invoke-Item`, `Start-Process`) for ta
 5. **Edit** the files following TMDL/PBIR rules precisely
 6. **Validate** by running `.\scripts\Validate-PBIP.ps1`
 7. **Apply changes** using the appropriate script:
-   - TMDL changes → `.\scripts\Invoke-SemanticModelRefresh.ps1`
-   - PBIR changes → `.\scripts\Restart-PBIDesktop.ps1 -Force`
+   - TMDL changes → `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath ".\path.pbip"`
+   - PBIR changes → `.\scripts\Restart-PBIDesktop.ps1 -PbipPath ".\path.pbip" -Force`
    - Open project → `.\scripts\Open-PBIPFile.ps1 -PbipPath "path" -Wait`
 
 ## TMDL Rules (Critical)
