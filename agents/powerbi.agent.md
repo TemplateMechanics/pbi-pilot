@@ -74,6 +74,7 @@ Never use manual shell commands (`start`, `Invoke-Item`, `Start-Process`) for ta
 - Measures need `formatString`
 - Multi-line DAX expressions indent one level deeper than properties
 - Don't touch `LocalDateTable_*` auto-generated tables
+- Never hardcode PBI Desktop version-specific paths — the `SampleDataPath` expression auto-detects the install folder at runtime
 
 ## PBIR Rules (Critical)
 - Include `$schema` in all JSON files

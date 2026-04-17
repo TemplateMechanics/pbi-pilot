@@ -271,16 +271,44 @@ relationship rel_Sales_Customer
 
 ### Shared Expressions / Parameters (expressions.tmdl)
 
-Use parameters to avoid hardcoded paths. This lets each user update one value instead of editing M queries in every table.
+Use parameters to avoid hardcoded paths. This lets the expression auto-detect the PBI Desktop SampleData folder across Store and MSI installs.
 
 ```tmdl
-/// Parameterized file path — user updates this to match their PBI Desktop install
+/// Auto-detects the PBI Desktop SampleData folder (Store or MSI install)
 expression SampleDataPath =
 		let
-			// Store install (default):
-			Source = "C:\Program Files\WindowsApps\Microsoft.MicrosoftPowerBIDesktop_...\bin\SampleData"
-			// MSI install alternative:
-			// Source = "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData"
+			MsiPath = "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData",
+			StoreBase = "C:\Program Files\WindowsApps",
+			StoreContents = try Folder.Contents(StoreBase) otherwise #table({"Name", "Folder Path"}, {}),
+			StoreMatches = Table.Sort(
+				Table.AddColumn(
+					Table.SelectRows(
+						StoreContents,
+						each Text.StartsWith([Name], "Microsoft.MicrosoftPowerBIDesktop_")
+							and Text.Contains([Name], "_x64_")
+					),
+					"SortKey",
+					each try Text.Combine(List.Transform(
+						Text.Split(Text.BetweenDelimiters([Name], "Microsoft.MicrosoftPowerBIDesktop_", "_x64_"), "."),
+						each Text.PadStart(_, 10, "0")
+					), ".") otherwise ""
+				),
+				{{"SortKey", Order.Descending}}
+			),
+			PathExists = (path) => not (try Folder.Contents(path))[HasError],
+			StoreCandidates = List.Transform(
+				Table.ToRecords(StoreMatches),
+				each [Folder Path] & [Name] & "\bin\SampleData"
+			),
+			StoreMatch = List.First(List.Select(StoreCandidates, each PathExists(_)), null),
+			Source =
+				if StoreMatch <> null then StoreMatch
+				else if PathExists(MsiPath) then MsiPath
+				else error Error.Record(
+					"SampleDataPath",
+					"Cannot find Power BI Desktop SampleData folder. Install PBI Desktop (Store or MSI) or update this expression.",
+					[StoreBase = StoreBase, StoreCandidates = StoreCandidates, MsiPath = MsiPath]
+				)
 		in
 			Source
 	lineageTag: c4e8f2a6-3b5d-7e9f-1a2c-4d6e8f0a2b4c

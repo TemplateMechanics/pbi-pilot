@@ -1,10 +1,42 @@
 /// Shared expressions and parameters for the semantic model.
-/// Users should update SampleDataPath to match their local PBI Desktop install.
+/// Auto-detects the PBI Desktop SampleData folder (Store or MSI install).
 expression SampleDataPath =
 		let
-			// Default path for Microsoft Store install of Power BI Desktop.
-			// MSI install path: "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData"
-			Source = "C:\Program Files\WindowsApps\Microsoft.MicrosoftPowerBIDesktop_2.152.1279.0_x64__8wekyb3d8bbwe\bin\SampleData"
+			// MSI install path (fixed location)
+			MsiPath = "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData",
+			// Store install path (version-independent lookup via Folder.Contents)
+			StoreBase = "C:\Program Files\WindowsApps",
+			StoreContents = try Folder.Contents(StoreBase) otherwise #table({"Name", "Folder Path"}, {}),
+			StoreMatches = Table.Sort(
+				Table.AddColumn(
+					Table.SelectRows(
+						StoreContents,
+						each Text.StartsWith([Name], "Microsoft.MicrosoftPowerBIDesktop_")
+							and Text.Contains([Name], "_x64_")
+					),
+					"SortKey",
+					each try Text.Combine(List.Transform(
+						Text.Split(Text.BetweenDelimiters([Name], "Microsoft.MicrosoftPowerBIDesktop_", "_x64_"), "."),
+						each Text.PadStart(_, 10, "0")
+					), ".") otherwise ""
+				),
+				{{"SortKey", Order.Descending}}
+			),
+			PathExists = (path) => not (try Folder.Contents(path))[HasError],
+			StoreCandidates = List.Transform(
+				Table.ToRecords(StoreMatches),
+				each [Folder Path] & [Name] & "\bin\SampleData"
+			),
+			StoreMatch = List.First(List.Select(StoreCandidates, each PathExists(_)), null),
+			// Prefer newest valid Store path, fall back to MSI
+			Source =
+				if StoreMatch <> null then StoreMatch
+				else if PathExists(MsiPath) then MsiPath
+				else error Error.Record(
+					"SampleDataPath",
+					"Cannot find Power BI Desktop SampleData folder. Install PBI Desktop (Store or MSI) or update this expression.",
+					[StoreBase = StoreBase, StoreCandidates = StoreCandidates, MsiPath = MsiPath]
+				)
 		in
 			Source
 	lineageTag: c4e8f2a6-3b5d-7e9f-1a2c-4d6e8f0a2b4c
