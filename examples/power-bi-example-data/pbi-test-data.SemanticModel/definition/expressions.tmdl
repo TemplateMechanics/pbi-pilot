@@ -1,10 +1,22 @@
 /// Shared expressions and parameters for the semantic model.
-/// Users should update SampleDataPath to match their local PBI Desktop install.
+/// Auto-detects the PBI Desktop SampleData folder (Store or MSI install).
 expression SampleDataPath =
 		let
-			// Default path for Microsoft Store install of Power BI Desktop.
-			// MSI install path: "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData"
-			Source = "C:\Program Files\WindowsApps\Microsoft.MicrosoftPowerBIDesktop_2.152.1279.0_x64__8wekyb3d8bbwe\bin\SampleData"
+			// MSI install path (fixed location)
+			MsiPath = "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData",
+			// Store install path (version-independent wildcard via Folder.Contents)
+			StoreBase = "C:\Program Files\WindowsApps",
+			StoreMatch = try Table.SelectRows(
+				Folder.Contents(StoreBase),
+				each Text.StartsWith([Name], "Microsoft.MicrosoftPowerBIDesktop_")
+					and Text.Contains([Name], "_x64_")
+			){0}[Folder Path] & Table.SelectRows(
+				Folder.Contents(StoreBase),
+				each Text.StartsWith([Name], "Microsoft.MicrosoftPowerBIDesktop_")
+					and Text.Contains([Name], "_x64_")
+			){0}[Name] & "\bin\SampleData" otherwise null,
+			// Prefer Store path, fall back to MSI path
+			Source = if StoreMatch <> null then StoreMatch else MsiPath
 		in
 			Source
 	lineageTag: c4e8f2a6-3b5d-7e9f-1a2c-4d6e8f0a2b4c

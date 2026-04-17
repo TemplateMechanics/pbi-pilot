@@ -271,16 +271,24 @@ relationship rel_Sales_Customer
 
 ### Shared Expressions / Parameters (expressions.tmdl)
 
-Use parameters to avoid hardcoded paths. This lets each user update one value instead of editing M queries in every table.
+Use parameters to avoid hardcoded paths. This lets the expression auto-detect the PBI Desktop SampleData folder across Store and MSI installs.
 
 ```tmdl
-/// Parameterized file path — user updates this to match their PBI Desktop install
+/// Auto-detects the PBI Desktop SampleData folder (Store or MSI install)
 expression SampleDataPath =
 		let
-			// Store install (default):
-			Source = "C:\Program Files\WindowsApps\Microsoft.MicrosoftPowerBIDesktop_...\bin\SampleData"
-			// MSI install alternative:
-			// Source = "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData"
+			MsiPath = "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData",
+			StoreBase = "C:\Program Files\WindowsApps",
+			StoreMatch = try Table.SelectRows(
+				Folder.Contents(StoreBase),
+				each Text.StartsWith([Name], "Microsoft.MicrosoftPowerBIDesktop_")
+					and Text.Contains([Name], "_x64_")
+			){0}[Folder Path] & Table.SelectRows(
+				Folder.Contents(StoreBase),
+				each Text.StartsWith([Name], "Microsoft.MicrosoftPowerBIDesktop_")
+					and Text.Contains([Name], "_x64_")
+			){0}[Name] & "\bin\SampleData" otherwise null,
+			Source = if StoreMatch <> null then StoreMatch else MsiPath
 		in
 			Source
 	lineageTag: c4e8f2a6-3b5d-7e9f-1a2c-4d6e8f0a2b4c
