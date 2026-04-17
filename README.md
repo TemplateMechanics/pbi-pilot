@@ -78,6 +78,8 @@ After AI makes changes to your TMDL/PBIR files:
 .\scripts\Restart-PBIDesktop.ps1 -PbipPath ".\MyReport.pbip"
 ```
 
+Use either Option A or Option B as the launcher path for a given cycle. Do not run restart and open back-to-back for the same file, or you can end up with duplicate Power BI Desktop windows.
+
 **Option C — Manual:**
 Close Power BI Desktop → Reopen the `.pbip` file.
 

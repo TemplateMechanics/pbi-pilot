@@ -54,10 +54,13 @@ PowerShell scripts in `scripts/` are **required tools** for operational tasks. A
 
 ### When to use which script:
 - **Opening files**: Always use `Open-PBIPFile.ps1`. Never use `start`, `Invoke-Item`, or manual process launching.
-- **MANDATORY — after every open or restart**: Power BI Desktop always opens with empty/stale data. You MUST run **both** steps as a single sequence every time you open or restart PBI Desktop — do NOT stop after step 1 and do NOT wait for the user to ask:
-  1. `Open-PBIPFile.ps1 -PbipPath "<path>.pbip" -Wait`  (or `Restart-PBIDesktop.ps1`)
-  2. `Invoke-SemanticModelRefresh.ps1 -PbipPath "<path>.pbip" -Refresh`
-  This is not optional. Without step 2, visuals will be empty and "Refresh now" banners will appear.
+- **MANDATORY — after every open or restart**: Power BI Desktop always opens with empty/stale data. First run **exactly one** launcher action, then run refresh:
+  1. Launcher action (choose one):
+    - `Open-PBIPFile.ps1 -PbipPath "<path>.pbip" -Wait` **or**
+    - `Restart-PBIDesktop.ps1 -PbipPath "<path>.pbip" -Force`
+  2. Refresh action:
+    - `Invoke-SemanticModelRefresh.ps1 -PbipPath "<path>.pbip" -Refresh`
+  Do **not** run both launcher actions back-to-back (restart + open), as that can result in duplicate Desktop windows. The refresh step after launcher is not optional.
 - **After editing TMDL files**: Ensure PBI Desktop is running with the PBIP open (use `Open-PBIPFile.ps1 -Wait` first if needed), then run `Invoke-SemanticModelRefresh.ps1 -PbipPath "./MyReport.pbip"` to push changes without restarting.
 - **After editing TMDL files (first time / empty data)**: Add `-Refresh` to also load data from sources: `Invoke-SemanticModelRefresh.ps1 -PbipPath "./MyReport.pbip" -Refresh`
 - **After editing PBIR files**: Run `Restart-PBIDesktop.ps1 -PbipPath "./MyReport.pbip" -Force` (PBIR changes require a restart).
