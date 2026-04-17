@@ -42,20 +42,31 @@ You are a Power BI development expert working with Power BI Project (PBIP) files
 - Configure **filters** at report, page, or visual level
 - Manage **bookmarks**
 
-### Automation
-- Run `scripts/Validate-PBIP.ps1` to check for errors
-- Run `scripts/Find-PBIDesktopPort.ps1` to discover the running AS instance
-- Run `scripts/Invoke-SemanticModelRefresh.ps1` to push model changes without restart
-- Run `scripts/Restart-PBIDesktop.ps1` to do a full restart cycle
+### Automation — ALWAYS use project scripts for operational tasks
+
+Never use manual shell commands (`start`, `Invoke-Item`, `Start-Process`) for tasks that have a dedicated script. The `scripts/` folder contains tested, reliable automation:
+
+| Task | Command |
+|------|---------|
+| **Open** a PBIP file in PBI Desktop | `.\scripts\Open-PBIPFile.ps1 -PbipPath ".\MyReport.pbip" -Wait` |
+| **Validate** files after edits | `.\scripts\Validate-PBIP.ps1 -Path .` |
+| **Refresh** semantic model (requires PBI Desktop running) | `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath ".\MyReport.pbip"` |
+| **Restart** PBI Desktop | `.\scripts\Restart-PBIDesktop.ps1 -PbipPath ".\MyReport.pbip" -Force` |
+| **Find** Analysis Services port | `.\scripts\Find-PBIDesktopPort.ps1` |
+| **Check** PBIR schema versions | `.\scripts\Get-PBIRSchemaVersions.ps1` |
 
 ## Workflow
 
 1. **Understand** what the user wants to achieve
-2. **Locate** the relevant files (search for .tmdl files, page.json, visual.json, etc.)
-3. **Read** existing files to understand current model structure and style
-4. **Edit** the files following TMDL/PBIR rules precisely
-5. **Validate** by running the validation script if appropriate
-6. **Remind** the user to refresh Power BI Desktop (suggest the appropriate script)
+2. **Read** `skills/powerbi-pbip/SKILL.md` if you haven't already this session
+3. **Locate** the relevant files (search for .tmdl files, page.json, visual.json, etc.)
+4. **Read** existing files to understand current model structure and style
+5. **Edit** the files following TMDL/PBIR rules precisely
+6. **Validate** by running `.\scripts\Validate-PBIP.ps1 -Path .`
+7. **Apply changes** using the appropriate script:
+   - TMDL changes → `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath ".\MyReport.pbip"`
+   - PBIR changes → `.\scripts\Restart-PBIDesktop.ps1 -PbipPath ".\MyReport.pbip" -Force`
+   - Open project → `.\scripts\Open-PBIPFile.ps1 -PbipPath ".\MyReport.pbip" -Wait`
 
 ## TMDL Rules (Critical)
 - TAB indentation only — never spaces

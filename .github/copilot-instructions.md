@@ -14,7 +14,7 @@ This workspace contains Power BI Project (PBIP) files. You are working with:
 3. **Generate unique GUIDs** for every new `lineageTag` — use format `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
 4. **Save as UTF-8 without BOM**, CRLF line endings
 5. **Don't edit** `LocalDateTable_*` auto-generated tables
-6. **After editing TMDL/PBIR files**, remind the user to refresh Power BI Desktop (close/reopen or use automation scripts in `scripts/`)
+6. **After editing TMDL/PBIR files**, apply changes using the automation scripts in `scripts/` (see Automation Scripts section below)
 7. **Report visuals** reference semantic model objects by exact name — Entity must match table name, Property must match column/measure name
 8. **When adding pages**, also update `pages.json` pageOrder array
 9. **When adding measures**, add `lineageTag` and `formatString` properties
@@ -34,11 +34,22 @@ This workspace contains Power BI Project (PBIP) files. You are working with:
 - Report config: `*.Report/definition/report.json`
 - Page ordering: `*.Report/definition/pages/pages.json`
 
-## Automation Scripts
+## Automation Scripts — USE THESE, DON'T REINVENT THEM
 
-PowerShell scripts are in `scripts/`:
-- `Find-PBIDesktopPort.ps1` — discovers the local Analysis Services port PBI Desktop is using
-- `Invoke-SemanticModelRefresh.ps1` — pushes semantic model changes to running PBI Desktop via TOM
-- `Restart-PBIDesktop.ps1` — automates close and reopen of the PBIP file
-- `Validate-PBIP.ps1` — checks TMDL and PBIR files for common errors
-- `Get-PBIRSchemaVersions.ps1` — reports schema versions used in PBIR files
+PowerShell scripts in `scripts/` are **required tools** for operational tasks. Always use the project scripts instead of writing manual commands, shell one-liners, or `Invoke-Item`/`Start-Process` workarounds.
+
+| Task | Script | Example |
+|------|--------|---------|
+| **Open a PBIP file** in PBI Desktop | `Open-PBIPFile.ps1` | `.\scripts\Open-PBIPFile.ps1 -PbipPath ".\MyReport.pbip" -Wait` |
+| **Validate** TMDL/PBIR files | `Validate-PBIP.ps1` | `.\scripts\Validate-PBIP.ps1 -Path .` |
+| **Refresh** the semantic model (requires PBI Desktop running with the PBIP open) | `Invoke-SemanticModelRefresh.ps1` | `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath ".\MyReport.pbip"` |
+| **Restart** PBI Desktop | `Restart-PBIDesktop.ps1` | `.\scripts\Restart-PBIDesktop.ps1 -PbipPath ".\MyReport.pbip" -Force` |
+| **Find** the Analysis Services port | `Find-PBIDesktopPort.ps1` | `.\scripts\Find-PBIDesktopPort.ps1` |
+| **Check** PBIR schema versions | `Get-PBIRSchemaVersions.ps1` | `.\scripts\Get-PBIRSchemaVersions.ps1` |
+
+### When to use which script:
+- **Opening files**: Always use `Open-PBIPFile.ps1`. Never use `start`, `Invoke-Item`, or manual process launching.
+- **After editing TMDL files**: Ensure PBI Desktop is running with the PBIP open (use `Open-PBIPFile.ps1 -Wait` first if needed), then run `Invoke-SemanticModelRefresh.ps1 -PbipPath ".\MyReport.pbip"` to push changes without restarting.
+- **After editing PBIR files**: Run `Restart-PBIDesktop.ps1 -PbipPath ".\MyReport.pbip" -Force` (PBIR changes require a non-interactive restart).
+- **After any edit**: Run `Validate-PBIP.ps1` to catch errors before refreshing.
+- **Troubleshooting**: Run `Find-PBIDesktopPort.ps1` to confirm PBI Desktop is running and get the port. Requires PBI Desktop to already have a PBIP open.
