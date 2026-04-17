@@ -58,12 +58,13 @@ PowerShell scripts in `scripts/` are **required tools** for operational tasks. A
   1. Launcher action (choose one):
     - `Open-PBIPFile.ps1 -PbipPath "<path>.pbip" -Wait` **or**
     - `Restart-PBIDesktop.ps1 -PbipPath "<path>.pbip" -Force`
-  2. Refresh action:
-    - `Invoke-SemanticModelRefresh.ps1 -PbipPath "<path>.pbip" -Refresh`
-  Do **not** run both launcher actions back-to-back (restart + open), as that can result in duplicate Desktop windows. The refresh step after launcher is not optional.
+  2. If you used `Restart-PBIDesktop.ps1`, wait for Desktop to finish loading before refreshing. `Restart-PBIDesktop.ps1` does **not** wait for the Analysis Services port to become available. Poll `Find-PBIDesktopPort.ps1` until it returns a port before proceeding.
+  3. Refresh action:
+     - `Invoke-SemanticModelRefresh.ps1 -PbipPath "<path>.pbip" -Refresh`
+  Do **not** run both launcher actions back-to-back (restart + open), as that can result in duplicate Desktop windows. The refresh step after launcher is not optional, and after a restart it must only be run once the port is available.
 - **After editing TMDL files**: Ensure PBI Desktop is running with the PBIP open (use `Open-PBIPFile.ps1 -Wait` first if needed), then run `Invoke-SemanticModelRefresh.ps1 -PbipPath "./MyReport.pbip"` to push changes without restarting.
 - **After editing TMDL files (first time / empty data)**: Add `-Refresh` to also load data from sources: `Invoke-SemanticModelRefresh.ps1 -PbipPath "./MyReport.pbip" -Refresh`
-- **After editing PBIR files**: Run `Restart-PBIDesktop.ps1 -PbipPath "./MyReport.pbip" -Force` (PBIR changes require a restart).
+- **After editing PBIR files**: Run `Restart-PBIDesktop.ps1 -PbipPath "./MyReport.pbip" -Force`, wait until `Find-PBIDesktopPort.ps1` returns a port, then run `Invoke-SemanticModelRefresh.ps1 -PbipPath "./MyReport.pbip" -Refresh` (PBIR changes require a restart).
 - **After any edit**: Run `Validate-PBIP.ps1` to catch errors before refreshing.
 - **Troubleshooting**: Run `Find-PBIDesktopPort.ps1` to confirm PBI Desktop is running and get the port. Requires PBI Desktop to already have a PBIP open.
 
