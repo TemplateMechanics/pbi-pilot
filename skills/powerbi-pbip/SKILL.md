@@ -626,6 +626,33 @@ The visual.json file defines a single visual's position, type, data bindings, an
 | `bookmarkNavigator` | Bookmark navigator |
 | `pageNavigator` | Page navigator |
 
+### CRITICAL — Common Visual Mistakes to Avoid
+
+> **NEVER invent queryState structures.** Always copy patterns from the examples below or from existing working visuals in the project.
+
+| Mistake | Correct |
+|---|---|
+| `barChart` | `clusteredBarChart` |
+| `columnChart` | `clusteredColumnChart` |
+| `table` | `tableEx` |
+| `matrix` | `pivotTable` |
+| `Categorical` with `categories`/`values` sub-objects | Named-role keys (`Category`, `Y`, `Values`, `Rows`, `Columns`) with `projections` arrays |
+| `Relational` with `Primary`/`Groupings`/`Values` | Named-role keys with `projections` arrays |
+| `filters: []` in page.json (schema 2.1.0) | Use `filterConfig` or omit entirely — check existing pages for the correct format |
+
+**queryState role mapping by visual type:**
+
+| Visual Type | queryState Roles |
+|---|---|
+| `clusteredBarChart`, `clusteredColumnChart`, `lineChart`, `areaChart` | `Category` + `Y` |
+| `card`, `slicer` | `Values` |
+| `tableEx` | `Values` (all columns in one projections array) |
+| `pivotTable` | `Rows` + `Columns` + `Values` |
+| `treemap` | `Group` + `Values` |
+| `pieChart`, `donutChart` | `Category` + `Y` |
+| `scatterChart` | `X` + `Y` + `Size` (optional) |
+| `lineClusteredColumnComboChart` | `Category` + `Y` + `Y2` |
+
 ### Mandatory Post-Edit Visibility Checklist (PBIR)
 
 After adding or editing pages, visuals, slicers, or page/report filters, you MUST perform these checks before concluding work:
@@ -927,6 +954,170 @@ Card with a **column** (must use Aggregation wrapper):
     "visualContainerObjects": {
       "title": [{ "properties": { "text": { "expr": { "Literal": { "Value": "'Total Sales Amount'" } } } } }]
     }
+  }
+}
+```
+
+---
+
+## Table Visual Example (tableEx)
+
+```json
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "sales_table",
+  "position": { "x": 40, "y": 20, "z": 1000, "width": 560, "height": 380, "tabOrder": 0 },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": { "SourceRef": { "Entity": "Sales" } },
+                  "Property": "Country"
+                }
+              },
+              "queryRef": "Sales.Country",
+              "active": true
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": { "SourceRef": { "Entity": "Sales" } },
+                      "Property": "Amount"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(Sales.Amount)",
+              "active": true
+            }
+          ]
+        }
+      }
+    },
+    "objects": {}
+  }
+}
+```
+
+---
+
+## Matrix Visual Example (pivotTable)
+
+```json
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "sales_matrix",
+  "position": { "x": 40, "y": 20, "z": 1000, "width": 560, "height": 380, "tabOrder": 0 },
+  "visual": {
+    "visualType": "pivotTable",
+    "query": {
+      "queryState": {
+        "Rows": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": { "SourceRef": { "Entity": "Sales" } },
+                  "Property": "Country"
+                }
+              },
+              "queryRef": "Sales.Country",
+              "active": true
+            }
+          ]
+        },
+        "Columns": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": { "SourceRef": { "Entity": "Product" } },
+                  "Property": "Category"
+                }
+              },
+              "queryRef": "Product.Category",
+              "active": true
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": { "SourceRef": { "Entity": "Sales" } },
+                      "Property": "Amount"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(Sales.Amount)",
+              "active": true
+            }
+          ]
+        }
+      }
+    },
+    "objects": {}
+  }
+}
+```
+
+---
+
+## Line Chart Visual Example
+
+```json
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "sales_trend",
+  "position": { "x": 40, "y": 20, "z": 1000, "width": 560, "height": 380, "tabOrder": 0 },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": { "SourceRef": { "Entity": "Date" } },
+                  "Property": "Month"
+                }
+              },
+              "queryRef": "Date.Month",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": { "SourceRef": { "Entity": "Sales" } },
+                  "Property": "Total Sales"
+                }
+              },
+              "queryRef": "Sales.Total Sales",
+              "active": true
+            }
+          ]
+        }
+      }
+    },
+    "objects": {}
   }
 }
 ```
