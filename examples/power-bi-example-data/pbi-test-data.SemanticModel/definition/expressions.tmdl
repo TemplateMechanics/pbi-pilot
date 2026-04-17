@@ -28,7 +28,7 @@ expression SampleDataPath =
 				else error Error.Record(
 					"SampleDataPath",
 					"Cannot find Power BI Desktop SampleData folder. Install PBI Desktop (Store or MSI) or update this expression.",
-					[StorePath = StoreMatch, MsiPath = MsiPath]
+					[StoreBase = StoreBase, StoreCandidates = StoreCandidates, MsiPath = MsiPath]
 				)
 		in
 			Source
