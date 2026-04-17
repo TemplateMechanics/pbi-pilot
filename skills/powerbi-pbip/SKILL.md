@@ -598,6 +598,82 @@ The visual.json file defines a single visual's position, type, data bindings, an
 | `bookmarkNavigator` | Bookmark navigator |
 | `pageNavigator` | Page navigator |
 
+### Mandatory Post-Edit Visibility Checklist (PBIR)
+
+After adding or editing pages, visuals, or slicers, you MUST perform these checks before concluding work:
+
+1. **Verify page registration:** Ensure each page folder exists and is listed in `definition/pages/pages.json` `pageOrder`.
+2. **Verify visual folders exist on disk:** For every expected visual, confirm `definition/pages/<page>/visuals/<visual>/visual.json` exists.
+3. **Verify slicers physically exist:** If filters were requested, confirm slicer visual folders/files exist (not just planned in text).
+4. **Verify field bindings:** Confirm slicer `queryState.Values.projections` references valid model fields (`Entity` + `Property`).
+5. **Run validation:** Execute `powershell ./scripts/Validate-PBIP.ps1 -Path <pbip-root-or-project-folder>` and require `Errors: 0`.
+6. **Refresh Power BI Desktop:**
+  - If PBIR/report layout changed: use `scripts/Restart-PBIDesktop.ps1`.
+  - If only semantic model TMDL changed: use `scripts/Invoke-SemanticModelRefresh.ps1`.
+7. **Post-refresh verification:** Re-check visual folder presence and report that slicers exist by explicit file path.
+
+If any of these checks fail, fix the issue first and re-run the checklist.
+
+### Troubleshooting: Visuals or Slicers Not Appearing After Restart
+
+If users report that newly added visuals/filters are missing from all pages:
+
+1. Verify the visual folders still exist on disk under `definition/pages/<page>/visuals/<visual>/visual.json`.
+2. Re-run `powershell ./scripts/Validate-PBIP.ps1 -Path <project-folder>` and require zero errors.
+3. Confirm the correct PBIP file is being opened (`*.pbip` points to the expected `.Report` folder).
+4. For sample/demo projects, set `.pbip` `settings.enableAutoRecovery` to `false` to prevent stale auto-recovery state from masking PBIR file changes.
+5. Restart PBI Desktop using `scripts/Restart-PBIDesktop.ps1` and wait for full load before checking visuals.
+
+### Adding Filters to Reports — Preferred Approaches
+
+There are **two** ways to add interactive filters in PBIR:
+
+#### 1. Page-Level Filters (Filter Pane — RECOMMENDED for externally-created reports)
+
+Add `filterConfig` to `page.json` to define filters visible in the **Filter Pane** (right sidebar).
+This is the most reliable approach for externally-authored PBIR because PBI Desktop always renders
+the filter pane from `page.json`, unlike canvas slicers which may not render if created externally.
+
+```json
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "my_page_id",
+  "displayName": "My Page",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280,
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "unique_filter_name_across_report",
+        "field": {
+          "Column": {
+            "Expression": { "SourceRef": { "Entity": "TableName" } },
+            "Property": "ColumnName"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
+  }
+}
+```
+
+**Key rules for page-level filters:**
+- Each filter `name` must be **unique across the entire report** (not just the page).
+- `type` options: `Categorical` (checkboxes), `Range` (numeric/date range), `Advanced` (complex conditions).
+- The `field` format is the same `QueryExpressionContainer` used in visual queries.
+- Filters appear in the Filter Pane (right sidebar) which users can expand by clicking the filter icon.
+
+#### 2. Canvas Slicer Visuals (on-canvas interactive controls)
+
+Add a slicer `visual.json` as a visual folder. Canvas slicers are interactive controls rendered on
+the page canvas. See the "Slicer Visual Example" section below for the JSON format.
+
+**Important:** Canvas slicers created externally (outside PBI Desktop) may not always render
+reliably. If slicers are not visible after restart, **always add page-level filters as a
+fallback** using the `filterConfig` approach above.
+
 ### Query Field Reference Patterns
 
 > **CRITICAL — Aggregation Required for Numeric Columns in Value Roles:**

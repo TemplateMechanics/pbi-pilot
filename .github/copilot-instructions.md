@@ -21,6 +21,8 @@ This workspace contains Power BI Project (PBIP) files. You are working with:
 10. **Prefer existing patterns** — look at existing .tmdl and .json files in the project for style consistency
 11. **Visual schema URL** must use `visualContainer/` (NOT `visual/`) — see SKILL.md for all correct schema paths
 12. **Numeric columns in value roles** (card Values, chart Y-axis) must use Aggregation wrapper — see SKILL.md for details
+13. **If visuals/filters do not appear after edits**, treat it as a refresh-state issue: verify visual folders exist on disk, run `Validate-PBIP.ps1`, and restart PBI Desktop. For demo/sample projects, set `.pbip` `settings.enableAutoRecovery` to `false` to avoid stale auto-recovery sessions masking PBIR changes.
+14. **When adding filters**, prefer page-level `filterConfig` in `page.json` over canvas slicer visuals. Canvas slicers created externally may not render reliably. Page-level filters always appear in the Filter Pane (right sidebar). Use both approaches together for maximum reliability — see SKILL.md for `filterConfig` JSON format.
 
 ## File Locations
 
