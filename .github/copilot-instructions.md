@@ -14,16 +14,17 @@ This workspace contains Power BI Project (PBIP) files. You are working with:
 3. **Generate unique GUIDs** for every new `lineageTag` — use format `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
 4. **Save as UTF-8 without BOM**, CRLF line endings
 5. **Don't edit** `LocalDateTable_*` auto-generated tables
-6. **After editing TMDL/PBIR files**, apply changes using the automation scripts in `scripts/` (see Automation Scripts section below)
-7. **Report visuals** reference semantic model objects by exact name — Entity must match table name, Property must match column/measure name
-8. **When adding pages**, also update `pages.json` pageOrder array
-9. **When adding measures**, add `lineageTag` and `formatString` properties
-10. **Prefer existing patterns** — look at existing .tmdl and .json files in the project for style consistency
-11. **Never hardcode PBI Desktop version-specific paths** — the `SampleDataPath` expression in `expressions.tmdl` auto-detects the install folder at runtime; preserve this dynamic pattern
-12. **Visual schema URL** must use `visualContainer/` (NOT `visual/`) — see SKILL.md for all correct schema paths
-13. **Numeric columns in value roles** (card Values, chart Y-axis) must use Aggregation wrapper — see SKILL.md for details
-14. **If visuals/filters do not appear after edits**, treat it as a refresh-state issue: verify visual folders exist on disk and, when filters are missing, confirm the relevant `*.Report/definition/pages/*/page.json` contains the expected filters in the page's existing format (`filters` or `filterConfig`); then run `Validate-PBIP.ps1` and restart PBI Desktop. For demo/sample projects, set `.pbip` `settings.enableAutoRecovery` to `false` to avoid stale auto-recovery sessions masking PBIR changes.
-15. **When adding filters**, prefer page-level filters in `page.json` over canvas slicer visuals, using the page's existing schema representation (`filters` or `filterConfig`) as documented in SKILL.md. Canvas slicers created externally may not render reliably. Page-level filters always appear in the Filter Pane (right sidebar). Use both approaches together for maximum reliability — see SKILL.md for the correct JSON format for the schema/version in use.
+6. **NEVER open or restart PBI Desktop without immediately running a data refresh** — `Open-PBIPFile.ps1` or `Restart-PBIDesktop.ps1` is always step 1; `Invoke-SemanticModelRefresh.ps1 -Refresh` is always step 2. Do NOT stop after step 1 and do NOT wait for the user to ask. Without the refresh, all visuals will be empty.
+7. **After editing TMDL/PBIR files**, apply changes using the automation scripts in `scripts/` (see Automation Scripts section below)
+8. **Report visuals** reference semantic model objects by exact name — Entity must match table name, Property must match column/measure name
+9. **When adding pages**, also update `pages.json` pageOrder array
+10. **When adding measures**, add `lineageTag` and `formatString` properties
+11. **Prefer existing patterns** — look at existing .tmdl and .json files in the project for style consistency
+12. **Never hardcode PBI Desktop version-specific paths** — the `SampleDataPath` expression in `expressions.tmdl` auto-detects the install folder at runtime; preserve this dynamic pattern
+13. **Visual schema URL** must use `visualContainer/` (NOT `visual/`) — see SKILL.md for all correct schema paths
+14. **Numeric columns in value roles** (card Values, chart Y-axis) must use Aggregation wrapper — see SKILL.md for details
+15. **If visuals/filters do not appear after edits**, treat it as a refresh-state issue: verify visual folders exist on disk and, when filters are missing, confirm the relevant `*.Report/definition/pages/*/page.json` contains the expected filters in the page's existing format (`filters` or `filterConfig`); then run `Validate-PBIP.ps1` and restart PBI Desktop. For demo/sample projects, set `.pbip` `settings.enableAutoRecovery` to `false` to avoid stale auto-recovery sessions masking PBIR changes.
+16. **When adding filters**, prefer page-level filters in `page.json` over canvas slicer visuals, using the page's existing schema representation (`filters` or `filterConfig`) as documented in SKILL.md. Canvas slicers created externally may not render reliably. Page-level filters always appear in the Filter Pane (right sidebar). Use both approaches together for maximum reliability — see SKILL.md for the correct JSON format for the schema/version in use.
 
 ## File Locations
 
@@ -48,6 +49,13 @@ PowerShell scripts in `scripts/` are **required tools** for operational tasks. A
 | **Restart** PBI Desktop | `Restart-PBIDesktop.ps1` | `.\scripts\Restart-PBIDesktop.ps1 -PbipPath ".\MyReport.pbip" -Force` |
 | **Find** the Analysis Services port | `Find-PBIDesktopPort.ps1` | `.\scripts\Find-PBIDesktopPort.ps1` |
 | **Check** PBIR schema versions | `Get-PBIRSchemaVersions.ps1` | `.\scripts\Get-PBIRSchemaVersions.ps1` |
+
+### MANDATORY — after every open or restart (two-step sequence)
+
+> **WARNING**: Power BI Desktop ALWAYS opens with empty/stale data. You MUST run BOTH steps as a single uninterrupted sequence every time you open or restart PBI Desktop. Do NOT stop after step 1. Do NOT wait for the user to ask. Without step 2, all visuals will be empty and the report is unusable.
+
+1. **Launcher** (choose one): `Open-PBIPFile.ps1 -PbipPath "<path>.pbip" -Wait` **or** `Restart-PBIDesktop.ps1 -PbipPath "<path>.pbip" -Force`
+2. **Refresh** (always): `Invoke-SemanticModelRefresh.ps1 -PbipPath "<path>.pbip" -Refresh`
 
 ### When to use which script:
 - **Opening files**: Always use `Open-PBIPFile.ps1`. Never use `start`, `Invoke-Item`, or manual process launching.
