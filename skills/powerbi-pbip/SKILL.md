@@ -605,17 +605,18 @@ After adding or editing pages, visuals, slicers, or page/report filters, you MUS
 1. **Verify page registration:** Ensure each page folder exists and is listed in `definition/pages/pages.json` `pageOrder`.
 2. **Verify visual folders exist on disk:** For every expected visual, confirm `definition/pages/<page>/visuals/<visual>/visual.json` exists.
 3. **Verify filters are physically present in PBIR:** If filters were requested, confirm either:
-   - page-level filters exist in `definition/pages/<page>/page.json` under `filterConfig`, and/or
+   - page-level filters exist in `definition/pages/<page>/page.json` using the page filter structure already present for that PBIR schema/version in the project (commonly top-level `filters`, or `filterConfig` in newer patterns), and/or
    - slicer visual folders/files exist under `definition/pages/<page>/visuals/<visual>/visual.json`.
+   Treat `filters` and `filterConfig` as schema/version-specific representations of page-level filtering; do not switch formats unless the target project/schema requires it.
    Do not claim filters were added if they exist only in plan text.
 4. **Verify field bindings:** Confirm each implemented filter references valid model fields (`Entity` + `Property`):
-   - for page-level filters, validate the bindings inside `page.json.filterConfig`
+   - for page-level filters, validate the bindings in whichever `page.json` structure is actually used by that page/schema (`filters` or `filterConfig`)
    - for slicers, validate `queryState.Values.projections`
 5. **Run validation:** Execute `powershell ./scripts/Validate-PBIP.ps1 -Path <pbip-root-or-project-folder>` and require `Errors: 0`.
 6. **Refresh Power BI Desktop:**
-  - If PBIR/report layout changed: use `scripts/Restart-PBIDesktop.ps1`.
-  - If only semantic model TMDL changed: use `scripts/Invoke-SemanticModelRefresh.ps1`.
-7. **Post-refresh verification:** Re-check visual folder presence and, if filters were requested, report explicit file path(s) showing the implemented filter mechanism: `definition/pages/<page>/page.json` for `filterConfig` filters and/or `definition/pages/<page>/visuals/<visual>/visual.json` for slicer filters.
+   - If PBIR/report layout changed: use `scripts/Restart-PBIDesktop.ps1`.
+   - If only semantic model TMDL changed: use `scripts/Invoke-SemanticModelRefresh.ps1`.
+7. **Post-refresh verification:** Re-check visual folder presence and, if filters were requested, report explicit file path(s) showing the implemented filter mechanism: `definition/pages/<page>/page.json` for page-level filters (identify whether the page uses `filters` or `filterConfig`) and/or `definition/pages/<page>/visuals/<visual>/visual.json` for slicer filters.
 
 If any of these checks fail, fix the issue first and re-run the checklist.
 
@@ -631,9 +632,12 @@ If users report that newly added visuals/filters are missing from all pages:
 
 ### Adding Filters to Reports — Preferred Approaches
 
-There are **two** ways to add interactive filters in PBIR:
+This section covers **two common ways to expose user-facing interactive filtering controls in PBIR**:
+Filter Pane filters and on-canvas slicers. Note that the **Filter Pane** can surface report-level,
+page-level, or visual-level filters; the example below focuses on a page-level `filterConfig` entry
+in `page.json`.
 
-#### 1. Page-Level Filters (Filter Pane — RECOMMENDED for externally-created reports)
+#### 1. Filter Pane Filters (page-level example — RECOMMENDED for externally-created reports)
 
 Add `filterConfig` to `page.json` to define filters visible in the **Filter Pane** (right sidebar).
 This is the most reliable approach for externally-authored PBIR because PBI Desktop always renders
