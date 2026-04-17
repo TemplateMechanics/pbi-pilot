@@ -58,7 +58,7 @@ PowerShell scripts in `scripts/` are **required tools** for operational tasks. A
   1. Launcher action (choose one):
     - `Open-PBIPFile.ps1 -PbipPath "<path>.pbip" -Wait` **or**
     - `Restart-PBIDesktop.ps1 -PbipPath "<path>.pbip" -Force`
-  2. If you used `Restart-PBIDesktop.ps1`, wait for Desktop to finish loading before refreshing. `Restart-PBIDesktop.ps1` does **not** wait for the Analysis Services port to become available. Retry `Find-PBIDesktopPort.ps1` in a loop (it throws when no port is found yet — catch/ignore failures and retry) until it succeeds.
+  2. If you used `Restart-PBIDesktop.ps1`, wait for Desktop to finish loading before refreshing. `Restart-PBIDesktop.ps1` does **not** wait for the Analysis Services port to become available. Retry `Find-PBIDesktopPort.ps1` in a loop — it throws a "Could not find" error when no port is found yet; catch only that transient condition and retry. If it throws for any other reason, stop and surface the error.
   3. Refresh action:
      - `Invoke-SemanticModelRefresh.ps1 -PbipPath "<path>.pbip" -Refresh`
   Do **not** run both launcher actions back-to-back (restart + open), as that can result in duplicate Desktop windows. The refresh step after launcher is not optional, and after a restart it must only be run once the port is available.
