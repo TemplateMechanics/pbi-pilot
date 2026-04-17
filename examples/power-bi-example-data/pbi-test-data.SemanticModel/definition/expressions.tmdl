@@ -1,5 +1,7 @@
-/// Shared expressions and parameters for the semantic model.
-/// Auto-detects the PBI Desktop SampleData folder (Store or MSI install).
+/// DEPRECATED: This shared expression is kept for standalone testing/reference only.
+/// The financials partition inlines its own copy of this logic to avoid the Power Query
+/// firewall error that occurs when a partition references a separate query that accesses
+/// a data source. Do NOT reference #"SampleDataPath" from partition M expressions.
 expression SampleDataPath =
 		let
 			// MSI install path (fixed location)

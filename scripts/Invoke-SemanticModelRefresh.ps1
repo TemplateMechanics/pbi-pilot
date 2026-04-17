@@ -20,7 +20,8 @@
     Path to the TMDL definition folder (e.g., ".\MyReport.SemanticModel\definition").
 
 .PARAMETER PbipPath
-    Alternative: path to the .SemanticModel folder. The script will append \definition.
+    Path to the .pbip file or the .SemanticModel folder. When a .pbip file is given,
+    the script finds the sibling *.SemanticModel\definition folder automatically.
 
 .PARAMETER Refresh
     After applying TMDL changes, trigger a full data refresh (re-loads data from sources).
