@@ -48,7 +48,7 @@ Never use manual shell commands (`start`, `Invoke-Item`, `Start-Process`) for ta
 
 | Task | Command |
 |------|---------|
-| **Open** a PBIP file in PBI Desktop | `.\scripts\Open-PBIPFile.ps1 -PbipPath "path" -Wait` |
+| **Open** a PBIP file in PBI Desktop | `.\scripts\Open-PBIPFile.ps1 -PbipPath ".\MyReport.pbip" -Wait` |
 | **Validate** files after edits | `.\scripts\Validate-PBIP.ps1 -Path .` |
 | **Refresh** semantic model (no restart) | `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath ".\path.pbip"` |
 | **Restart** PBI Desktop | `.\scripts\Restart-PBIDesktop.ps1 -PbipPath ".\path.pbip" -Force` |
@@ -66,7 +66,7 @@ Never use manual shell commands (`start`, `Invoke-Item`, `Start-Process`) for ta
 7. **Apply changes** using the appropriate script:
    - TMDL changes → `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath ".\path.pbip"`
    - PBIR changes → `.\scripts\Restart-PBIDesktop.ps1 -PbipPath ".\path.pbip" -Force`
-   - Open project → `.\scripts\Open-PBIPFile.ps1 -PbipPath "path" -Wait`
+   - Open project → `.\scripts\Open-PBIPFile.ps1 -PbipPath ".\MyReport.pbip" -Wait`
 
 ## TMDL Rules (Critical)
 - TAB indentation only — never spaces
