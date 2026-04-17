@@ -281,12 +281,19 @@ expression SampleDataPath =
 			StoreBase = "C:\Program Files\WindowsApps",
 			StoreContents = try Folder.Contents(StoreBase) otherwise #table({"Name", "Folder Path"}, {}),
 			StoreMatches = Table.Sort(
-				Table.SelectRows(
-					StoreContents,
-					each Text.StartsWith([Name], "Microsoft.MicrosoftPowerBIDesktop_")
-						and Text.Contains([Name], "_x64_")
+				Table.AddColumn(
+					Table.SelectRows(
+						StoreContents,
+						each Text.StartsWith([Name], "Microsoft.MicrosoftPowerBIDesktop_")
+							and Text.Contains([Name], "_x64_")
+					),
+					"SortKey",
+					each try Text.Combine(List.Transform(
+						Text.Split(Text.BetweenDelimiters([Name], "Microsoft.MicrosoftPowerBIDesktop_", "_x64_"), "."),
+						each Text.PadStart(_, 10, "0")
+					), ".") otherwise ""
 				),
-				{{"Name", Order.Descending}}
+				{{"SortKey", Order.Descending}}
 			),
 			PathExists = (path) => not (try Folder.Contents(path))[HasError],
 			StoreCandidates = List.Transform(
