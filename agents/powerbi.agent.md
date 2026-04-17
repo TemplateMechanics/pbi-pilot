@@ -66,7 +66,7 @@ Never use manual shell commands (`start`, `Invoke-Item`, `Start-Process`) for ta
 7. **Apply changes** using the appropriate script:
    - TMDL changes → `.\scripts\Invoke-SemanticModelRefresh.ps1`
    - PBIR changes → `.\scripts\Restart-PBIDesktop.ps1`
-   - Open project → `.\scripts\Open-PBIPFile.ps1 -Wait`
+   - Open project → `.\scripts\Open-PBIPFile.ps1 -PbipPath "path" -Wait`
 
 ## TMDL Rules (Critical)
 - TAB indentation only — never spaces
