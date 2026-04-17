@@ -56,11 +56,11 @@ Never use manual shell commands (`start`, `Invoke-Item`, `Start-Process`) for ta
 | **Find** Analysis Services port | `.\scripts\Find-PBIDesktopPort.ps1` |
 | **Check** PBIR schema versions | `.\scripts\Get-PBIRSchemaVersions.ps1` |
 
-### First-time open / fresh clone
-When the user asks to open a PBIP for the first time (e.g., after cloning the repo, or when visuals show "no data"), run **both** steps automatically — do NOT wait for the user to ask:
-1. `.\scripts\Open-PBIPFile.ps1 -PbipPath "<path>.pbip" -Wait`
+### MANDATORY — after every open or restart
+Power BI Desktop always opens with empty/stale data. You MUST run **both** steps as a single sequence every time you open or restart PBI Desktop — do NOT stop after step 1 and do NOT wait for the user to ask:
+1. `.\scripts\Open-PBIPFile.ps1 -PbipPath "<path>.pbip" -Wait`  (or `Restart-PBIDesktop.ps1`)
 2. `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath "<path>.pbip" -Refresh`
-This ensures the semantic model schema is applied AND data is loaded from sources so visuals populate immediately.
+This is not optional. Without step 2, visuals will be empty and "Refresh now" banners will appear.
 
 ## Workflow
 
