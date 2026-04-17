@@ -636,14 +636,22 @@ If users report that newly added visuals/filters are missing from all pages:
 
 This section covers **two common ways to expose user-facing interactive filtering controls in PBIR**:
 Filter Pane filters and on-canvas slicers. Note that the **Filter Pane** can surface report-level,
-page-level, or visual-level filters; the example below focuses on a page-level `filterConfig` entry
-in `page.json`.
+page-level, or visual-level filters; the examples below focus on page-level filters in `page.json`.
 
-#### 1. Filter Pane Filters (page-level example — RECOMMENDED for externally-created reports)
+**Important:** Page-level filters have two schema representations. Always match the format already
+used by the target project's `page.json` files:
+- **`filters` (top-level array)** — used with page schema `1.0.0` and some older versions
+- **`filterConfig` (nested object)** — used with page schema `2.1.0` and newer
 
-Add `filterConfig` to `page.json` to define filters visible in the **Filter Pane** (right sidebar).
+Do not mix formats within a project unless the schema requires it.
+
+#### 1. Filter Pane Filters (page-level — RECOMMENDED for externally-created reports)
+
+Add page-level filters to `page.json` to define filters visible in the **Filter Pane** (right sidebar).
 This is the most reliable approach for externally-authored PBIR because PBI Desktop always renders
 the filter pane from `page.json`, unlike canvas slicers which may not render if created externally.
+
+**Schema `2.1.0`+ — `filterConfig` format:**
 
 ```json
 {
@@ -670,6 +678,31 @@ the filter pane from `page.json`, unlike canvas slicers which may not render if 
 }
 ```
 
+**Schema `1.0.0` — top-level `filters` format:**
+
+```json
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.0.0/schema.json",
+  "name": "my_page_id",
+  "displayName": "My Page",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280,
+  "filters": [
+    {
+      "name": "unique_filter_name_across_report",
+      "field": {
+        "Column": {
+          "Expression": { "SourceRef": { "Entity": "TableName" } },
+          "Property": "ColumnName"
+        }
+      },
+      "type": "Categorical"
+    }
+  ]
+}
+```
+
 **Key rules for page-level filters:**
 - Each filter `name` must be **unique across the entire report** (not just the page).
 - `type` options: `Categorical` (checkboxes), `Range` (numeric/date range), `Advanced` (complex conditions).
@@ -683,7 +716,7 @@ the page canvas. See the "Slicer Visual Example" section below for the JSON form
 
 **Important:** Canvas slicers created externally (outside PBI Desktop) may not always render
 reliably. If slicers are not visible after restart, **always add page-level filters as a
-fallback** using the `filterConfig` approach above.
+fallback** using the appropriate format (`filters` or `filterConfig`) for the page's schema version.
 
 ### Query Field Reference Patterns
 
