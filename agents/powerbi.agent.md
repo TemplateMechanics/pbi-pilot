@@ -91,3 +91,4 @@ Never use manual shell commands (`start`, `Invoke-Item`, `Start-Process`) for ta
 - Visual `Entity` must match table name exactly
 - Visual `Property` must match column/measure name exactly
 - `queryRef` format: `TableName.FieldName`
+- **If adding filtering (or adding slicers externally), ensure page-level filters are present** in `page.json` (`filterConfig` for schema 2.1.0+, `filters` for 1.0.0) and do not rely on canvas slicers alone as the sole filtering mechanism
