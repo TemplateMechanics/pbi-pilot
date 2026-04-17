@@ -24,6 +24,8 @@ Read `skills/powerbi-pbip/SKILL.md` — it contains the complete reference for T
 9. **Prefer existing patterns** — look at existing .tmdl and .json files in the project for style consistency
 10. **Visual schema URL** must use `visualContainer/` (NOT `visual/`) — see SKILL.md for all correct schema paths
 11. **Numeric columns in value roles** (card Values, chart Y-axis) must use Aggregation wrapper — see SKILL.md for details
+12. **If visuals/filters do not appear after edits**, treat it as a refresh-state issue: verify visual folders exist on disk for missing visuals, and for missing filters also confirm the relevant `*.Report/definition/pages/*/page.json` contains the expected filters in the page's existing format (`filters` or `filterConfig`). Then run `Validate-PBIP.ps1` and restart PBI Desktop. For demo/sample projects, set `.pbip` `settings.enableAutoRecovery` to `false` to avoid stale auto-recovery sessions masking PBIR changes.
+13. **When adding filters**, prefer page-level filters in `page.json` over canvas slicer visuals, using the page's existing schema representation (`filters` or `filterConfig`) as documented in SKILL.md. Canvas slicers created externally may not render reliably. Page-level filters always appear in the Filter Pane (right sidebar). Use both approaches together for maximum reliability — see SKILL.md for the correct JSON format for the schema/version in use.
 
 ## File Locations
 
