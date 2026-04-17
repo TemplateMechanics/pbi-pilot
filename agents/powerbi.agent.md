@@ -62,7 +62,7 @@ Never use manual shell commands (`start`, `Invoke-Item`, `Start-Process`) for ta
 3. **Locate** the relevant files (search for .tmdl files, page.json, visual.json, etc.)
 4. **Read** existing files to understand current model structure and style
 5. **Edit** the files following TMDL/PBIR rules precisely
-6. **Validate** by running `.\scripts\Validate-PBIP.ps1`
+6. **Validate** by running `.\scripts\Validate-PBIP.ps1 -Path .`
 7. **Apply changes** using the appropriate script:
    - TMDL changes → `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath ".\path.pbip"`
    - PBIR changes → `.\scripts\Restart-PBIDesktop.ps1 -PbipPath ".\path.pbip" -Force`
