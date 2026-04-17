@@ -600,17 +600,22 @@ The visual.json file defines a single visual's position, type, data bindings, an
 
 ### Mandatory Post-Edit Visibility Checklist (PBIR)
 
-After adding or editing pages, visuals, or slicers, you MUST perform these checks before concluding work:
+After adding or editing pages, visuals, slicers, or page/report filters, you MUST perform these checks before concluding work:
 
 1. **Verify page registration:** Ensure each page folder exists and is listed in `definition/pages/pages.json` `pageOrder`.
 2. **Verify visual folders exist on disk:** For every expected visual, confirm `definition/pages/<page>/visuals/<visual>/visual.json` exists.
-3. **Verify slicers physically exist:** If filters were requested, confirm slicer visual folders/files exist (not just planned in text).
-4. **Verify field bindings:** Confirm slicer `queryState.Values.projections` references valid model fields (`Entity` + `Property`).
+3. **Verify filters are physically present in PBIR:** If filters were requested, confirm either:
+   - page-level filters exist in `definition/pages/<page>/page.json` under `filterConfig`, and/or
+   - slicer visual folders/files exist under `definition/pages/<page>/visuals/<visual>/visual.json`.
+   Do not claim filters were added if they exist only in plan text.
+4. **Verify field bindings:** Confirm each implemented filter references valid model fields (`Entity` + `Property`):
+   - for page-level filters, validate the bindings inside `page.json.filterConfig`
+   - for slicers, validate `queryState.Values.projections`
 5. **Run validation:** Execute `powershell ./scripts/Validate-PBIP.ps1 -Path <pbip-root-or-project-folder>` and require `Errors: 0`.
 6. **Refresh Power BI Desktop:**
   - If PBIR/report layout changed: use `scripts/Restart-PBIDesktop.ps1`.
   - If only semantic model TMDL changed: use `scripts/Invoke-SemanticModelRefresh.ps1`.
-7. **Post-refresh verification:** Re-check visual folder presence and report that slicers exist by explicit file path.
+7. **Post-refresh verification:** Re-check visual folder presence and, if filters were requested, report explicit file path(s) showing the implemented filter mechanism: `definition/pages/<page>/page.json` for `filterConfig` filters and/or `definition/pages/<page>/visuals/<visual>/visual.json` for slicer filters.
 
 If any of these checks fail, fix the issue first and re-run the checklist.
 
