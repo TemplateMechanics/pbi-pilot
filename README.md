@@ -78,6 +78,8 @@ After AI makes changes to your TMDL/PBIR files:
 .\scripts\Restart-PBIDesktop.ps1 -PbipPath ".\MyReport.pbip"
 ```
 
+Choose either the TOM refresh path (Option A) or the restart path (Option B) for a given cycle. After a restart, wait for `Find-PBIDesktopPort.ps1` to return a port, then run `Invoke-SemanticModelRefresh.ps1 -PbipPath ".\MyReport.pbip" -Refresh` — the data refresh step is mandatory. Do not run restart and open back-to-back, or you can end up with duplicate Desktop windows.
+
 **Option C — Manual:**
 Close Power BI Desktop → Reopen the `.pbip` file.
 
