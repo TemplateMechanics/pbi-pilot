@@ -47,13 +47,19 @@ PowerShell scripts in `scripts/` are **required tools** for operational tasks. A
 | **Open a PBIP file** in PBI Desktop | `Open-PBIPFile.ps1` | `./scripts/Open-PBIPFile.ps1 -PbipPath "./MyReport.pbip" -Wait` |
 | **Validate** TMDL/PBIR files | `Validate-PBIP.ps1` | `./scripts/Validate-PBIP.ps1 -Path .` |
 | **Refresh** the semantic model (requires PBI Desktop running with the PBIP open) | `Invoke-SemanticModelRefresh.ps1` | `./scripts/Invoke-SemanticModelRefresh.ps1 -PbipPath "./MyReport.pbip"` |
+| **Refresh** with data reload | `Invoke-SemanticModelRefresh.ps1` | `./scripts/Invoke-SemanticModelRefresh.ps1 -PbipPath "./MyReport.pbip" -Refresh` |
 | **Restart** PBI Desktop | `Restart-PBIDesktop.ps1` | `./scripts/Restart-PBIDesktop.ps1 -PbipPath "./MyReport.pbip" -Force` |
 | **Find** the Analysis Services port | `Find-PBIDesktopPort.ps1` | `./scripts/Find-PBIDesktopPort.ps1` |
 | **Check** PBIR schema versions | `Get-PBIRSchemaVersions.ps1` | `./scripts/Get-PBIRSchemaVersions.ps1` |
 
 ### When to use which script:
 - **Opening files**: Always use `Open-PBIPFile.ps1`. Never use `start`, `Invoke-Item`, or manual process launching.
+- **MANDATORY — after every open or restart**: Power BI Desktop always opens with empty/stale data. You MUST run **both** steps as a single sequence every time you open or restart PBI Desktop — do NOT stop after step 1 and do NOT wait for the user to ask:
+  1. `Open-PBIPFile.ps1 -PbipPath "<path>.pbip" -Wait`  (or `Restart-PBIDesktop.ps1`)
+  2. `Invoke-SemanticModelRefresh.ps1 -PbipPath "<path>.pbip" -Refresh`
+  This is not optional. Without step 2, visuals will be empty and "Refresh now" banners will appear.
 - **After editing TMDL files**: Ensure PBI Desktop is running with the PBIP open (use `Open-PBIPFile.ps1 -Wait` first if needed), then run `Invoke-SemanticModelRefresh.ps1 -PbipPath "./MyReport.pbip"` to push changes without restarting.
+- **After editing TMDL files (first time / empty data)**: Add `-Refresh` to also load data from sources: `Invoke-SemanticModelRefresh.ps1 -PbipPath "./MyReport.pbip" -Refresh`
 - **After editing PBIR files**: Run `Restart-PBIDesktop.ps1 -PbipPath "./MyReport.pbip" -Force` (PBIR changes require a restart).
 - **After any edit**: Run `Validate-PBIP.ps1` to catch errors before refreshing.
 - **Troubleshooting**: Run `Find-PBIDesktopPort.ps1` to confirm PBI Desktop is running and get the port. Requires PBI Desktop to already have a PBIP open.

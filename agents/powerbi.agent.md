@@ -50,10 +50,17 @@ Never use manual shell commands (`start`, `Invoke-Item`, `Start-Process`) for ta
 |------|---------|
 | **Open** a PBIP file in PBI Desktop | `.\scripts\Open-PBIPFile.ps1 -PbipPath ".\MyReport.pbip" -Wait` |
 | **Validate** files after edits | `.\scripts\Validate-PBIP.ps1 -Path .` |
-| **Refresh** semantic model (requires PBI Desktop running) | `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath ".\MyReport.pbip"` |
+| **Refresh** semantic model (schema only) | `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath ".\MyReport.pbip"` |
+| **Refresh** semantic model + reload data | `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath ".\MyReport.pbip" -Refresh` |
 | **Restart** PBI Desktop | `.\scripts\Restart-PBIDesktop.ps1 -PbipPath ".\MyReport.pbip" -Force` |
 | **Find** Analysis Services port | `.\scripts\Find-PBIDesktopPort.ps1` |
 | **Check** PBIR schema versions | `.\scripts\Get-PBIRSchemaVersions.ps1` |
+
+### MANDATORY — after every open or restart
+Power BI Desktop always opens with empty/stale data. You MUST run **both** steps as a single sequence every time you open or restart PBI Desktop — do NOT stop after step 1 and do NOT wait for the user to ask:
+1. `.\scripts\Open-PBIPFile.ps1 -PbipPath "<path>.pbip" -Wait`  (or `Restart-PBIDesktop.ps1`)
+2. `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath "<path>.pbip" -Refresh`
+This is not optional. Without step 2, visuals will be empty and "Refresh now" banners will appear.
 
 ## Workflow
 
@@ -65,6 +72,7 @@ Never use manual shell commands (`start`, `Invoke-Item`, `Start-Process`) for ta
 6. **Validate** by running `.\scripts\Validate-PBIP.ps1 -Path .`
 7. **Apply changes** using the appropriate script:
    - TMDL changes → `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath ".\MyReport.pbip"`
+   - TMDL changes (first time / empty data) → `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath ".\MyReport.pbip" -Refresh`
    - PBIR changes → `.\scripts\Restart-PBIDesktop.ps1 -PbipPath ".\MyReport.pbip" -Force`
    - Open project → `.\scripts\Open-PBIPFile.ps1 -PbipPath ".\MyReport.pbip" -Wait`
 
