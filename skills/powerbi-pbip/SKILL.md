@@ -279,15 +279,23 @@ expression SampleDataPath =
 		let
 			MsiPath = "C:\Program Files\Microsoft Power BI Desktop\bin\SampleData",
 			StoreBase = "C:\Program Files\WindowsApps",
-			StoreMatches = Table.SelectRows(
-				Folder.Contents(StoreBase),
-				each Text.StartsWith([Name], "Microsoft.MicrosoftPowerBIDesktop_")
-					and Text.Contains([Name], "_x64_")
+			StoreContents = try Folder.Contents(StoreBase) otherwise #table({"Name", "Folder Path"}, {}),
+			StoreMatches = Table.Sort(
+				Table.SelectRows(
+					StoreContents,
+					each Text.StartsWith([Name], "Microsoft.MicrosoftPowerBIDesktop_")
+						and Text.Contains([Name], "_x64_")
+				),
+				{{"Name", Order.Descending}}
 			),
-			StoreMatch = try StoreMatches{0}[Folder Path] & StoreMatches{0}[Name] & "\bin\SampleData" otherwise null,
 			PathExists = (path) => not (try Folder.Contents(path))[HasError],
+			StoreCandidates = List.Transform(
+				Table.ToRecords(StoreMatches),
+				each [Folder Path] & [Name] & "\bin\SampleData"
+			),
+			StoreMatch = List.First(List.Select(StoreCandidates, each PathExists(_)), null),
 			Source =
-				if StoreMatch <> null and PathExists(StoreMatch) then StoreMatch
+				if StoreMatch <> null then StoreMatch
 				else if PathExists(MsiPath) then MsiPath
 				else error Error.Record(
 					"SampleDataPath",
