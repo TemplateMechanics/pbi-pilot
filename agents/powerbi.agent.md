@@ -56,11 +56,12 @@ Never use manual shell commands (`start`, `Invoke-Item`, `Start-Process`) for ta
 | **Find** Analysis Services port | `.\scripts\Find-PBIDesktopPort.ps1` |
 | **Check** PBIR schema versions | `.\scripts\Get-PBIRSchemaVersions.ps1` |
 
-### MANDATORY — after every open or restart
-Power BI Desktop always opens with empty/stale data. You MUST run **both** steps as a single sequence every time you open or restart PBI Desktop — do NOT stop after step 1 and do NOT wait for the user to ask:
-1. `.\scripts\Open-PBIPFile.ps1 -PbipPath "<path>.pbip" -Wait`  (or `Restart-PBIDesktop.ps1`)
-2. `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath "<path>.pbip" -Refresh`
-This is not optional. Without step 2, visuals will be empty and "Refresh now" banners will appear.
+### MANDATORY — after every open or restart (two-step sequence)
+
+> **WARNING**: Power BI Desktop ALWAYS opens with empty/stale data. You MUST run BOTH steps every time you open or restart PBI Desktop. Do NOT stop after step 1. Do NOT wait for the user to ask. If you used `Restart-PBIDesktop.ps1`, wait for the Analysis Services port to become available (poll with `.\scripts\Find-PBIDesktopPort.ps1`) before running step 2. Without step 2, all visuals will be empty and the report is unusable.
+
+1. **Launcher** (choose one): `.\scripts\Open-PBIPFile.ps1 -PbipPath "<path>.pbip" -Wait` **or** `.\scripts\Restart-PBIDesktop.ps1 -PbipPath "<path>.pbip" -Force`
+2. **Refresh** (always; after a restart, only once the port is available): `.\scripts\Invoke-SemanticModelRefresh.ps1 -PbipPath "<path>.pbip" -Refresh`
 
 ## Workflow
 

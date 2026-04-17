@@ -17,7 +17,7 @@ Read `skills/powerbi-pbip/SKILL.md` — it contains the complete reference for T
 2. **Generate unique GUIDs** for every new `lineageTag` — format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
 3. **Save as UTF-8 without BOM**, CRLF line endings
 4. **Don't edit** `LocalDateTable_*` auto-generated tables
-5. **NEVER open or restart PBI Desktop without immediately running a data refresh** — `Open-PBIPFile.ps1` or `Restart-PBIDesktop.ps1` is always step 1; `Invoke-SemanticModelRefresh.ps1 -Refresh` is always step 2. Do NOT stop after step 1 and do NOT wait for the user to ask. Without the refresh, all visuals will be empty.
+5. **NEVER open or restart PBI Desktop without immediately running a data refresh** — `./scripts/Open-PBIPFile.ps1` or `./scripts/Restart-PBIDesktop.ps1` is always step 1; `./scripts/Invoke-SemanticModelRefresh.ps1 -Refresh` is always step 2. Do NOT stop after step 1 and do NOT wait for the user to ask. Without the refresh, all visuals will be empty.
 6. **After editing TMDL/PBIR files**, apply changes using the automation scripts in `scripts/` (see Automation Scripts section below)
 7. **Report visuals** reference semantic model objects by exact name — Entity must match table name, Property must match column/measure name
 8. **When adding pages**, also update `pages.json` pageOrder array
@@ -55,21 +55,16 @@ PowerShell scripts in `scripts/` are **required tools** for operational tasks. A
 
 ### MANDATORY — after every open or restart (two-step sequence)
 
-> **WARNING**: Power BI Desktop ALWAYS opens with empty/stale data. You MUST run BOTH steps as a single uninterrupted sequence every time you open or restart PBI Desktop. Do NOT stop after step 1. Do NOT wait for the user to ask. Without step 2, all visuals will be empty and the report is unusable.
+> **WARNING**: Power BI Desktop ALWAYS opens with empty/stale data. You MUST run BOTH steps every time you open or restart PBI Desktop. Do NOT stop after step 1. Do NOT wait for the user to ask. If you used `Restart-PBIDesktop.ps1`, wait for the Analysis Services port to become available (poll with `./scripts/Find-PBIDesktopPort.ps1`) before running step 2. Without step 2, all visuals will be empty and the report is unusable.
 
-1. **Launcher** (choose one): `Open-PBIPFile.ps1 -PbipPath "<path>.pbip" -Wait` **or** `Restart-PBIDesktop.ps1 -PbipPath "<path>.pbip" -Force`
-2. **Refresh** (always): `Invoke-SemanticModelRefresh.ps1 -PbipPath "<path>.pbip" -Refresh`
+1. **Launcher** (choose one): `./scripts/Open-PBIPFile.ps1 -PbipPath "<path>.pbip" -Wait` **or** `./scripts/Restart-PBIDesktop.ps1 -PbipPath "<path>.pbip" -Force`
+2. **Refresh** (always; after a restart, only once the port is available): `./scripts/Invoke-SemanticModelRefresh.ps1 -PbipPath "<path>.pbip" -Refresh`
 
 ### When to use which script:
 - **Opening files**: Always use `Open-PBIPFile.ps1`. Never use `start`, `Invoke-Item`, or manual process launching.
-- **MANDATORY — after every open or restart**: Power BI Desktop always opens with empty/stale data. First run **exactly one** launcher action, then run refresh:
-  1. Launcher action (choose one):
-    - `Open-PBIPFile.ps1 -PbipPath "<path>.pbip" -Wait` **or**
-    - `Restart-PBIDesktop.ps1 -PbipPath "<path>.pbip" -Force`
-  2. If you used `Restart-PBIDesktop.ps1`, wait for Desktop to finish loading before refreshing. `Restart-PBIDesktop.ps1` does **not** wait for the Analysis Services port to become available. Retry `Find-PBIDesktopPort.ps1` in a loop — it throws a "Could not find" error when no port is found yet; catch only that transient condition and retry. If it throws for any other reason, stop and surface the error.
-  3. Refresh action:
-     - `Invoke-SemanticModelRefresh.ps1 -PbipPath "<path>.pbip" -Refresh`
-  Do **not** run both launcher actions back-to-back (restart + open), as that can result in duplicate Desktop windows. The refresh step after launcher is not optional, and after a restart it must only be run once the port is available.
+- **MANDATORY — after every open or restart**: See the two-step sequence above. Key details for restarts:
+  - `Restart-PBIDesktop.ps1` does **not** wait for the Analysis Services port to become available. Retry `./scripts/Find-PBIDesktopPort.ps1` in a loop — it throws a "Could not find" error when no port is found yet; catch only that transient condition and retry. If it throws for any other reason, stop and surface the error.
+  - Do **not** run both launcher actions back-to-back (restart + open), as that can result in duplicate Desktop windows. The refresh step after launcher is not optional, and after a restart it must only be run once the port is available.
 - **After editing TMDL files**: Ensure PBI Desktop is running with the PBIP open (use `Open-PBIPFile.ps1 -Wait` first if needed), then run `Invoke-SemanticModelRefresh.ps1 -PbipPath "./MyReport.pbip"` to push changes without restarting.
 - **After editing TMDL files (first time / empty data)**: Add `-Refresh` to also load data from sources: `Invoke-SemanticModelRefresh.ps1 -PbipPath "./MyReport.pbip" -Refresh`
 - **After editing PBIR files**: Run `Restart-PBIDesktop.ps1 -PbipPath "./MyReport.pbip" -Force` to apply the PBIR/report-layout changes. Then, once `Find-PBIDesktopPort.ps1` returns a port, run `Invoke-SemanticModelRefresh.ps1 -PbipPath "./MyReport.pbip" -Refresh` to reload data and clear the stale-data state after restart; the TOM refresh step does **not** apply PBIR changes.
