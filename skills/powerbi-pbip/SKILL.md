@@ -659,11 +659,10 @@ After adding or editing pages, visuals, slicers, or page/report filters, you MUS
 
 1. **Verify page registration:** Ensure each page folder exists and is listed in `definition/pages/pages.json` `pageOrder`.
 2. **Verify visual folders exist on disk:** For every expected visual, confirm `definition/pages/<page>/visuals/<visual>/visual.json` exists.
-3. **Verify filters are physically present in PBIR:** If filters were requested, confirm the applicable implemented mechanism exists:
-   - report-level filters exist in `definition/report.json` (for report filters),
-   - page-level filters exist in `definition/pages/<page>/page.json` using the page filter structure already present for that PBIR schema/version in the project (commonly top-level `filters`, or `filterConfig` in newer patterns), and/or
-   - slicer visual folders/files exist under `definition/pages/<page>/visuals/<visual>/visual.json`.
-   Treat `filters` and `filterConfig` as schema/version-specific representations of page-level filtering in `page.json`; do not switch formats unless the target project/schema requires it.
+3. **Verify requested filter mechanisms are implemented in the correct files:** If a page is intended to have interactive filtering, confirm its `page.json` contains page-level `filterConfig` (schema 2.1.0+) or top-level `filters` (schema 1.0.0). This is especially important when canvas slicers were also added or created externally, because slicers may fail to render reliably; page-level filters should be treated as the primary mechanism, with canvas slicers as optional supplements. Additionally confirm:
+   - report-level filters exist in `definition/report.json` (if report-wide filters were requested),
+   - slicer visual folders/files exist under `definition/pages/<page>/visuals/<visual>/visual.json` (if canvas slicers were also added as supplements).
+   Treat `filters` and `filterConfig` as schema/version-specific representations of page-level filtering in `page.json`; do not switch formats unless the target project/schema requires it, and do not require either structure on pages where no page-level filtering was requested.
    Do not claim filters were added if they exist only in plan text.
 4. **Verify field bindings:** Confirm each implemented filter references valid model fields (`Entity` + `Property`):
    - for report-level filters, validate the bindings in `definition/report.json`
@@ -764,14 +763,16 @@ the filter pane from `page.json`, unlike canvas slicers which may not render if 
 - The `field` format is the same `QueryExpressionContainer` used in visual queries.
 - Filters appear in the Filter Pane (right sidebar) which users can expand by clicking the filter icon.
 
-#### 2. Canvas Slicer Visuals (on-canvas interactive controls)
+#### 2. Canvas Slicer Visuals (OPTIONAL on-canvas supplements)
 
 Add a slicer `visual.json` as a visual folder. Canvas slicers are interactive controls rendered on
 the page canvas. See the "Slicer Visual Example" section below for the JSON format.
 
-**Important:** Canvas slicers created externally (outside PBI Desktop) may not always render
-reliably. If slicers are not visible after restart, **always add page-level filters as a
-fallback** using the appropriate format (`filters` or `filterConfig`) for the page's schema version.
+> **WARNING — Canvas slicers are NOT a substitute for page-level filters when a page needs filtering UX.**
+> Slicers created externally (outside PBI Desktop) frequently fail to render.
+> If a page requires filtering, define the page-level filter in `page.json` (`filterConfig` or `filters`) and use any canvas slicer as an optional supplementary on-canvas control.
+> Do not add empty or arbitrary page-level filters to pages that do not need filtering.
+> When a slicer is needed, NEVER rely on a canvas slicer as the sole filtering mechanism on that page.
 
 ### Query Field Reference Patterns
 
